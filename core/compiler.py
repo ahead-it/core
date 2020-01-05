@@ -127,10 +127,12 @@ class Merger:
                     attr = getattr(obj, m)
 
                     if callable(attr):
-                        if (attr.__module__ in [modname, 'core.object.attributes']) and (i == 0):
+                        isstatic = not inspect.ismethod(attr)
+                        attr = inspect.unwrap(attr)
+                        if (attr.__module__ == modname) and (i == 0):
                             self._add_tomap('app.' + typ + '/' + nam + '.' + m, modname + '/' + claname + '.' + m)
 
-                            if not inspect.ismethod(attr):
+                            if isstatic:
                                 body += '    @staticmethod\n'
                             body += '    def ' + m + '(' + ', '.join(attr.__code__.co_varnames) + '):\n'
                             body += '        pass\n'

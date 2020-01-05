@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
 Ahead Core (v {0})
 Powered by Python {1}
-Copyright Ahead 2019
+Copyright ahead.it 2019-2020
 '''.format(core.__appinfo().version, sys.version))
 
     parser = argparse.ArgumentParser()

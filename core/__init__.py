@@ -20,7 +20,7 @@ from core.object.attributes import PublicMethod
 def __appinfo():
     app = AppInfo()
     app.display_name = 'Core'
-    app.version = '1.0.20001.0'
+    app.version = '1.0.20002.0'
     app.author = 'ahead.it'
     return app
     

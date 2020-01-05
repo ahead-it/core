@@ -69,6 +69,16 @@ class Server():
         Insert a record in the database
         """
 
+    def table_modify(self, table: core.object.table.Table):
+        """
+        Modify a record in the database
+        """
+
+    def table_delete(self, table: core.object.table.Table):
+        """
+        Delete a record in the database
+        """        
+
     def table_findset(self, table: core.object.table.Table):
         """
         Select dataset from the database

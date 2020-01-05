@@ -14,6 +14,7 @@ Core requirements:
 * [Babel](http://babel.pocoo.org/) for internationalization
 * [Pylint](https://www.pylint.org/) for code check
 * [Poedit](https://poedit.net/) for translations
+* [Watchdog](https://pythonhosted.org/watchdog/) for reload on the fly changed files
 
 Windows requirements:
 * [six](https://pypi.org/project/six/) for compatibility

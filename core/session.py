@@ -18,11 +18,11 @@ class Session():
         socket      live connected through websocket
         batch       running batch from application server
     """    
-    process_id = 0
+    process_id = os.getpid()
     language_code = ''
     id = ''
     type = '' 
-    hostname = ''
+    hostname = socket.gethostname()
     database = None # type: core.database.server.Server
     db_id = None
     user_id = ''
@@ -31,15 +31,10 @@ class Session():
 
     @staticmethod
     def initialize():
-        Session.process_id = os.getpid()
         Session.language_code = locale.getdefaultlocale()[0]
         Session.id = str(uuid.uuid4())
         Session.type = 'cli' 
-        Session.hostname = socket.gethostname()
-        Session.database: core.database.server.Server = None
-        Session.db_id = None
         Session.user_id = ''
-        Session.connected = False
         Session.authenticated = False
         
     @staticmethod
@@ -55,5 +50,16 @@ class Session():
 
         Session.database = core.database.factory.ServerFactory.CreateServer(core.application.Application.instance)
         Session.database.connect()      
-        Session.connected = True  
         Session.db_id = Session.database.get_connectionid()
+        Session.connected = True  
+        
+    @staticmethod
+    def disconnect():
+        """
+        Disconnect from db server
+        """
+        if Session.connected:
+            Session.database.disconnect()
+            Session.database = None
+            Session.db_id = None
+            Session.connected = False

@@ -1,3 +1,6 @@
+from functools import wraps
+
+
 map = {}
 
 def _add_tomap(func, attribute):
@@ -11,6 +14,7 @@ def PublicMethod(func):
     Define a method callable without authentication 
     """
     _add_tomap(func, 'public')
+    @wraps(func)
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
     return wrapper

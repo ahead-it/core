@@ -17,6 +17,7 @@ class FieldInteger(Field):
         self.value = 0
         self.initvalue = 0
         self.xvalue = 0
+        self.autoincrement = False
 
     def checkvalue(self, value):
         return int(value)

@@ -8,6 +8,7 @@ import core.application
 import core.language
 import core.session
 from core.utility.convert import Convert
+from core.utility.proxy import Reloader
 
 
 class Control:
@@ -65,7 +66,7 @@ class RemoteError(Exception):
         super().__init__(value['message'])
         self.fmt_exception = value
 
-
+        
 def worker_loop(args):
     """
     Process worker loop
@@ -81,6 +82,8 @@ def worker_loop(args):
         pipe = args['pipe']
         control = Control(pipe)
 
+        core.session.Session.connect()
+
         core.application.Application.log('prcwrker', 'I', core.language.label('Process ready to work'))
 
         while True:
@@ -90,7 +93,7 @@ def worker_loop(args):
                 if obj['message'] == 'request':
                     try:
                         core.session.Session.initialize()
-
+                        
                         msg = {
                             'message': 'response',
                             'value': obj['function'](control, *obj['args']),
@@ -110,6 +113,9 @@ def worker_loop(args):
                         except:
                             pass
 
+                elif obj['message'] == 'reload':
+                    Reloader.reload_module(obj['value'])
+
                 else:
                     raise Exception(core.language.label('Unknown message \'{0}\''.format(obj)))
 
@@ -122,6 +128,12 @@ def worker_loop(args):
         pass
     except:
         core.application.Application.logexception('prcwrker')
+
+    # cleanup
+    try:
+        core.session.Session.disconnect()
+    except:
+        pass
 
     core.application.Application.log('prcwrker', 'I', core.language.label('Process shutdown'))      
 
@@ -216,7 +228,14 @@ class ProcessPool:
 
                 if not worker.process.is_alive():
                     self.pool.remove(worker)
-                    break   
+                    break  
+
+    def notify_reload(self, modulename):
+        """
+        Notify workers to reload a specific module
+        """
+        for worker in self.pool:
+            worker.pipe.send({'message': 'reload', 'value': modulename})
               
     async def enqueue_wait(self, control: ControlProxy, function, *args):
         """

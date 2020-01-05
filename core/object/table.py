@@ -3,6 +3,7 @@ from core.object.unit import Unit
 from core.object.unit import UnitType
 from core.field.field import Field
 from core.utility.convert import Convert
+from core.language import label
 import core.session
 
 
@@ -38,7 +39,9 @@ class Table(Unit):
 
     def __setattr__(self, key, value):
         handled = False
-        if hasattr(self, key):
+
+        # user friendly value assignment
+        if hasattr(self, key) and (not issubclass(type(value), Field)):
             a = getattr(self, key)
             if issubclass(type(a), Field):
                 a.value = value
@@ -110,6 +113,38 @@ class Table(Unit):
         """
         Event before insertion
         """
+
+    def modify(self, run_trigger=False):
+        """
+        Modify the record
+        """
+        if run_trigger:
+            self._onmodify()
+
+        core.session.Session.database.table_modify(self)
+        self._accept_changes()
+
+    def _onmodify(self):
+        """
+        Event before modify
+        """
+
+    def delete(self, run_trigger=False):
+        """
+        Delete the record
+        """
+        if run_trigger:
+            self._ondelete()
+
+        core.session.Session.database.table_delete(self)
+
+    def _ondelete(self):
+        """
+        Event before deletion
+        """
+
+    def _raise_concurrencyerror(self):
+        raise Exception(label('Another user has modified \'{0}\', restart the activity'.format(self._caption)))
 
     def _raise_emptyerror(self):
         raise Exception('FIXME')

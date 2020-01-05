@@ -1,11 +1,12 @@
 from typing import List
 import pyodbc
 import core.database.server
-import core.field.field
 import core.object.option
 import core.object.table
 import core.session
+import core.application
 from core.language import label
+from core.field.field import Field, FieldType
 
 
 class SqlServer(core.database.server.Server):
@@ -21,9 +22,10 @@ class SqlServer(core.database.server.Server):
         dsn += 'SERVER=' + self.host + ';'
         dsn += 'DATABASE=' + self.db_name +';'
         if self.login > '':
-            dsn += 'UID=' + self.login + ';PWD=' + self.password
+            dsn += 'UID=' + self.login + ';PWD=' + self.password + ';'
         else:
-            dsn += 'Trusted_Connection=yes'
+            dsn += 'Trusted_Connection=yes;'
+        dsn += 'APP=Core ' + core.application.Application.instance['display_name']
 
         self._conn = pyodbc.connect(dsn, autocommit=False)
 
@@ -77,7 +79,7 @@ class SqlServer(core.database.server.Server):
 
         return res
 
-    def _list_fields(self, fields: List[core.field.field.Field], prefix=''):
+    def _list_fields(self, fields: List[Field], prefix=''):
         res = ''
         comma = False
         for field in fields:
@@ -87,16 +89,22 @@ class SqlServer(core.database.server.Server):
             res += prefix + '[' + field.sqlname + ']'
         return res
 
-    def _get_fieldtype(self, field: core.field.field.Field):
+    def _get_fieldtype(self, field: Field):
         res = ''
-        if field.type == core.field.field.FieldType.CODE:
+        if field.type == FieldType.CODE:
             res += 'nvarchar(' + str(field.length) + ') NOT NULL'
 
-        elif field.type in [core.field.field.FieldType.INTEGER, core.field.field.FieldType.OPTION]:
+        elif field.type in [FieldType.INTEGER]:
+            res += 'int'
+            if field.autoincrement:
+                res += ' IDENTITY(1,1)'
+            res += ' NOT NULL'
+
+        elif field.type in [FieldType.OPTION]:
             res += 'int NOT NULL'
 
         else:
-            raise Exception(label('Unknown field type \'{0}\''.format(core.field.field.FieldType.getcaption(field.type))))
+            raise Exception(label('Unknown field type \'{0}\''.format(FieldType.getcaption(field.type))))
 
         return res
                 
@@ -122,6 +130,8 @@ class SqlServer(core.database.server.Server):
                         curdef = row['typename']
                         if row['typename'] == 'nvarchar':
                             curdef += '(' + str(int(row['max_length'] / 2)) + ')'
+                        if row['is_identity'] == 1:
+                            curdef += ' IDENTITY(1,1)'
                         if row['is_nullable'] == 0:
                             curdef += ' NOT NULL'
 
@@ -151,9 +161,9 @@ class SqlServer(core.database.server.Server):
                 sql = 'ALTER TABLE [' + table._sqlname + '] ADD '
                 sql += '[' + field.sqlname + '] ' + self._get_fieldtype(field) 
                 sql += ' CONSTRAINT [' + field.sqlname + '$DEF] DEFAULT '
-                if field.type in [core.field.field.FieldType.CODE]:
+                if field.type in [FieldType.CODE]:
                     sql += '\'\''
-                elif field.type in [core.field.field.FieldType.INTEGER, core.field.field.FieldType.OPTION]:
+                elif field.type in [FieldType.INTEGER, FieldType.OPTION]:
                     sql += '0'
                 self.execute(sql)
 
@@ -219,29 +229,29 @@ class SqlServer(core.database.server.Server):
 
         self._process_primarykey(table)
 
-    def from_sqlvalue(self, field: core.field.field.Field, value):
+    def from_sqlvalue(self, field: Field, value):
         res = None
-        if field.type in [core.field.field.FieldType.CODE, core.field.field.FieldType.INTEGER]:
+        if field.type in [FieldType.CODE, FieldType.INTEGER]:
             res = value
 
-        elif field.type == field.FieldType.OPTION:
+        elif field.type == FieldType.OPTION:
             res = core.object.option.Option.getoptions()[value]
 
         else:
-            raise Exception(label('Unknown field type \'{0}\''.format(core.field.field.FieldType.getcaption(field.type))))
+            raise Exception(label('Unknown field type \'{0}\''.format(FieldType.getcaption(field.type))))
 
         return res
 
-    def to_sqlvalue(self, field: core.field.field.Field, value):
+    def to_sqlvalue(self, field: Field, value):
         res = None
-        if field.type in [core.field.field.FieldType.CODE, core.field.field.FieldType.INTEGER]:
+        if field.type in [FieldType.CODE, FieldType.INTEGER]:
             res = value
 
-        elif field.type == field.FieldType.OPTION:
+        elif field.type == FieldType.OPTION:
             res = core.object.option.Option.getvalue(value)
 
         else:
-            raise Exception(label('Unknown field type \'{0}\''.format(core.field.field.FieldType.getcaption(field.type))))
+            raise Exception(label('Unknown field type \'{0}\''.format(FieldType.getcaption(field.type))))
 
         return res
 
@@ -250,23 +260,98 @@ class SqlServer(core.database.server.Server):
             
     def table_insert(self, table: core.object.table.Table):
         pars = []
+        places = []
 
-        sql = 'INSERT INTO [' + table._sqlname + '] ('
-        sql += self._list_fields(table._fields)
-        sql += ') VALUES ('
-
-        comma = False
+        identity_field = None
+        identity_insert = False
+        fields = []
         for field in table._fields:
-            if comma:
-                sql += ', '
-            comma = True
-            sql += '?'
+            if field.type in [FieldType.INTEGER]:
+                if field.autoincrement:
+                    identity_field = field
+                    if field.value == 0:
+                        continue
+                    else:
+                        identity_insert = True
+
+            fields.append(field)
+            places.append('?')
             pars.append(self.to_sqlvalue(field, field.value))
 
+        sql = 'INSERT INTO [' + table._sqlname + '] ('
+        sql += self._list_fields(fields)
+        sql += ') VALUES ('
+        sql += ', '.join(places)
         sql += ')'
+
+        if identity_insert:
+            self.execute('SET IDENTITY_INSERT [' + table._sqlname + '] ON')
 
         self.execute(sql, pars)
         self._set_rowversion(table)
+
+        if identity_insert:
+            self.execute('SET IDENTITY_INSERT [' + table._sqlname + '] OFF')
+        elif identity_field is not None:
+            identity_field.value = self.query('SELECT @@IDENTITY AS [id]')[0]['id']
+
+    def table_modify(self, table: core.object.table.Table):
+        pars = []
+
+        fields = []
+        for field in table._fields:
+            if field in table._primarykey:
+                continue
+            if field.value == field.xvalue:
+                continue
+            fields.append(field)
+
+        if not fields:
+            return
+
+        sql = 'UPDATE [' + table._sqlname + '] SET '
+
+        comma = False
+        for field in fields:
+            if comma:
+                sql += ', '
+            comma = True
+            sql += '[' + field.sqlname + '] = ?'
+            pars.append(self.to_sqlvalue(field, field.value))
+
+        sql += ' WHERE '
+        sql += self._get_wherepk(table, pars)
+
+        n = self.execute(sql, pars)
+        if n != 1:
+            table._raise_concurrencyerror()
+        self._set_rowversion(table)
+
+    def table_delete(self, table: core.object.table.Table):
+        pars = []
+        sql = 'DELETE FROM [' + table._sqlname + '] WHERE '
+        sql += self._get_wherepk(table, pars)
+
+        n = self.execute(sql, pars)
+        if n != 1:
+            table._raise_concurrencyerror()
+
+    def _get_wherepk(self, table: core.object.table.Table, pars, with_timestamp=True):
+        sql = ''
+
+        comma = False
+        for field in table._primarykey:
+            if comma:
+                sql += ' AND '
+            comma = True
+            sql += '([' + field.sqlname + '] = ?)'
+            pars.append(self.to_sqlvalue(field, field.value))
+
+        if with_timestamp:
+            sql += ' AND ([timestamp] <= ?)'
+            pars.append(table._rowversion)
+
+        return sql
 
     def _table_findset(self, table: core.object.table.Table, size, nextset, ascending):
         pars = []

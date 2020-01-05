@@ -1,15 +1,8 @@
 import multiprocessing
-import threading
-import signal
-import uuid
-import time
 import os
 import importlib
-import traceback
 import inspect
-import asyncio
-from typing import Dict, List
-import sys
+from typing import Dict
 import json
 from core.session import Session
 from core.app import AppInfo
@@ -19,6 +12,7 @@ import core.object.table
 import core.webserver
 from core.utility.convert import Convert
 import core.process
+
 
 class Application:
     """
@@ -206,6 +200,8 @@ class Application:
             Application.process_pool = core.process.ProcessPool(Application.instance['max_processes'])
             Application.process_pool.start()
 
+            core.utility.proxy.Reloader.start()
+
             if Application.instance['webserver_enabled']:
                 core.webserver.WebServer.start()
 
@@ -219,6 +215,8 @@ class Application:
         """        
         try:    
             core.webserver.WebServer.stop()
+
+            core.utility.proxy.Reloader.stop()
 
             if Application.process_pool:
                 Application.process_pool.stop()

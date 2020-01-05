@@ -1,3 +1,4 @@
+import importlib
 import uuid
 from core.object.option import Option
 from core.language import label
@@ -37,7 +38,55 @@ class Unit:
         """
         if not self._name:
             qn = self.__class__.__qualname__
-            self._name = self.__module__ + '.' + qn[:qn.find('.')]
-        
+            if '.' in qn:
+                qn = qn[:qn.find('.')]
+            self._name = self.__module__ + '.' + qn
+                    
         if not self._caption:
             self._caption = self._name
+
+    def __reduce__(self):
+        """
+        Implement pickle for proxied objects
+        """
+        clsname = self.__class__.__qualname__
+        p = clsname.find('__new__')
+        if p > 0:
+            clsname = clsname[0:p-1]
+
+        state = {
+            'modulename': self.__class__.__module__,
+            'classname': clsname
+        }
+
+        members = [self.__class__.__dict__, self.__dict__] 
+        keys = ['static', 'instance']
+        for i in range(0, 2):
+            state[keys[i]] = {}
+            for m in members[i]:
+                if m.startswith('__'):
+                    continue
+
+                attr = getattr(self, m)
+
+                if callable(attr):
+                    continue
+                
+                state[keys[i]][m] = attr
+
+        return (Unit._restore, (state, ))
+
+    @staticmethod
+    def _restore(args):
+        """
+        Restore a pickle unit
+        """
+        mod = importlib.import_module(args['modulename'])
+        cla = getattr(mod, args['classname'])
+        obj = cla()
+        for k in args['static']:
+            setattr(cla, k, args['static'][k])
+        for k in args['instance']:
+            setattr(obj, k, args['instance'][k])    
+        return obj
+                
