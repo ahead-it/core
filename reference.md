@@ -53,3 +53,15 @@ class MathManagement(Codeunit):
         return a + b
 ```
 
+## Access control
+### Public method
+Public methods are served without authentication and are
+identified by `@PublicMethod` decorator.
+```python
+from core import *
+
+@PublicMethod
+class MathManagement(Codeunit):
+    def sum(self, a, b):
+        return a + b
+```

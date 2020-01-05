@@ -17,12 +17,25 @@ class Proxy:
         mod = importlib.import_module(parts[0] + '.' + parts[1])
         if not hasattr(mod, parts[2]):
             raise InvalidUnitException(unitname)
-        self._object_class = getattr(mod, parts[2])
-        self._object = None
+
+        self.object_class = getattr(mod, parts[2])
+        self.object = None
+        self.unitname = parts[0] + '.' + parts[1]
+        self.classname = parts[2]
 
     def create(self):
-        self._object = self._object_class()
+        self.object = self.object_class()
+
+    def is_public(self, method):
+        mod = importlib.import_module('app.map')
+        funs = getattr(mod, 'functions')
+        mn = self.unitname + '/' + self.classname + '.' + method
+        if mn not in funs:
+            return False
+        if 'public' not in funs[mn]:
+            return False
+        return True
 
     def invoke(self, method, **kwargs):
-        method = getattr(self._object, method)
+        method = getattr(self.object, method)
         return method(**kwargs)

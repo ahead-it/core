@@ -49,9 +49,14 @@ def _rpc_dispatcher(control, path, kwargs, cookie):
     if len(parts) != 2:
         raise Exception('Invalid request \'{0}\''.format(path))
 
+    method = parts[1]
+
     proxy = Proxy('app.codeunit.' + parts[0])
+    if (not core.session.Session.authenticated) and (not proxy.is_public(method)):
+        raise Exception('Unauthorized access to method \'{0}\' in \'{1}\''.format(method, parts[0]))
+
     proxy.create()
-    return proxy.invoke(parts[1], **kwargs)
+    return proxy.invoke(method, **kwargs)
     
 
 class RpcHandler(tornado.web.RequestHandler):

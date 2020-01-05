@@ -11,7 +11,7 @@ def PublicMethod(func):
     Define a method callable without authentication 
     """
     _add_tomap(func, 'public')
-    def wrapper():
-        func()
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
     return wrapper
 

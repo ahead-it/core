@@ -229,16 +229,24 @@ class Merger:
         maps = {'functions': self._funcmap, 'attributes': self._attrmap}
         for map in maps:
             f.write(map + ' = {\n')
+            i = 0
             for x in maps[map]:
+                i += 1
                 f.write('    \'' + x + '\': [\n')
-                i = 0
+
+                j = 0
                 for y in maps[map][x]:
-                    i += 1
+                    j += 1
                     f.write('        \'' + y + '\'')
-                    if i < len(maps[map][x]):
+                    if j < len(maps[map][x]):
                         f.write(',')
                     f.write('\n')
-                f.write('    ]\n')
+
+                f.write('    ]')
+                if i < len(maps[map]):
+                        f.write(',')
+                f.write('\n')
+                
             f.write('}\n\n')
 
         f.close()        
