@@ -1,0 +1,15 @@
+{
+  "editor.tabSize": 4,
+  "files.exclude": {
+    "**/*__pycache__": true,
+    "**/**/*__pycache__": true,
+    "**/**/**/*__pycache__": true,
+    "**/**/**/**/*__pycache__": true
+  },
+  "python.pythonPath": "C:\\Python38\\python.exe",
+  "python.linting.pylintArgs": [
+    "--disable=R",
+    "--disable=C",
+    "--unsafe-load-any-extension=y"
+  ]  
+}

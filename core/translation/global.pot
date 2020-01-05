@@ -1,0 +1,113 @@
+# English (United States) translations for Core.
+# Copyright (C) 2020 ORGANIZATION
+# This file is distributed under the same license as the Core project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Core 1.0.0.0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2020-01-05 00:26+0000\n"
+"PO-Revision-Date: 2020-01-05 00:26+0000\n"
+"Last-Translator: My Dream Team\n"
+"Language: en_US\n"
+"Language-Team: My Dream Team\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.7.0\n"
+
+msgctxt "core.application"
+msgid "No instance connected"
+msgstr ""
+
+msgctxt "core.process"
+msgid "Process ready to work"
+msgstr ""
+
+msgctxt "core.process"
+msgid "Unknown message '{0}'"
+msgstr ""
+
+msgctxt "core.process"
+msgid "Process shutdown"
+msgstr ""
+
+msgctxt "core.process"
+msgid "Starting {0} worker processes"
+msgstr ""
+
+msgctxt "core.process"
+msgid "Process '{0}' is not responding, adding a new process to pool"
+msgstr ""
+
+msgctxt "core.process"
+msgid "Process pool is full"
+msgstr ""
+
+msgctxt "core.webserver"
+msgid "Started {0} server on port {1}"
+msgstr ""
+
+msgctxt "core.webserver"
+msgid "Server stopped"
+msgstr ""
+
+msgctxt "core.database.factory"
+msgid "Unsupported database type '{0}'"
+msgstr ""
+
+msgctxt "core.database.sqlserver"
+msgid "Unknown field type '{0}'"
+msgstr ""
+
+msgctxt "core.database.sqlserver"
+msgid "Table '{0}' has not primary key"
+msgstr ""
+
+msgctxt "core.field.code"
+msgid "Value of '{0}' cannot be longer than {1}"
+msgstr ""
+
+msgctxt "core.field.field"
+msgid "Code"
+msgstr ""
+
+msgctxt "core.field.field"
+msgid "Integer"
+msgstr ""
+
+msgctxt "core.field.field"
+msgid "Option"
+msgstr ""
+
+msgctxt "core.field.option"
+msgid "Field '{0}' has no options defined"
+msgstr ""
+
+msgctxt "core.object.unit"
+msgid "Table"
+msgstr ""
+
+msgctxt "core.object.unit"
+msgid "Codeunit"
+msgstr ""
+
+msgctxt "core.object.unit"
+msgid "Report"
+msgstr ""
+
+msgctxt "core.object.unit"
+msgid "Page"
+msgstr ""
+
+msgctxt "core.object.unit"
+msgid "Query"
+msgstr ""
+
+msgctxt "core.utility.proxy"
+msgid "Invalid unit '{0}'"
+msgstr ""
+

@@ -1,0 +1,112 @@
+# English (United States) translations for Core.
+# Copyright (C) 2020 ORGANIZATION
+# This file is distributed under the same license as the Core project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2020.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Core 1.0.0.0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2020-01-05 00:26+0000\n"
+"PO-Revision-Date: 2020-01-05 01:30+0100\n"
+"Language-Team: My Dream Team\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.7.0\n"
+"X-Generator: Poedit 2.2.4\n"
+"Last-Translator: \n"
+"Language: it_IT\n"
+
+msgctxt "core.application"
+msgid "No instance connected"
+msgstr "Nessuna istanza connessa"
+
+msgctxt "core.process"
+msgid "Process ready to work"
+msgstr "Processo pronto"
+
+msgctxt "core.process"
+msgid "Unknown message '{0}'"
+msgstr "Messaggio '{0}' sconosciuto"
+
+msgctxt "core.process"
+msgid "Process shutdown"
+msgstr "Processo terminato"
+
+msgctxt "core.process"
+msgid "Starting {0} worker processes"
+msgstr "Avvio di '{0}' processi"
+
+msgctxt "core.process"
+msgid "Process '{0}' is not responding, adding a new process to pool"
+msgstr "Il processo '{0}' non risponde, aggiunta di un nuovo al pool"
+
+msgctxt "core.process"
+msgid "Process pool is full"
+msgstr "Il pool dei processi è pieno"
+
+msgctxt "core.webserver"
+msgid "Started {0} server on port {1}"
+msgstr "Avviato server '{0}' su porta '{1}'"
+
+msgctxt "core.webserver"
+msgid "Server stopped"
+msgstr "Server arrestato"
+
+msgctxt "core.database.factory"
+msgid "Unsupported database type '{0}'"
+msgstr "Tipo di database non supportato '{0}'"
+
+msgctxt "core.database.sqlserver"
+msgid "Unknown field type '{0}'"
+msgstr "Tipo di campo sconosciuto '{0}'"
+
+msgctxt "core.database.sqlserver"
+msgid "Table '{0}' has not primary key"
+msgstr "La tabella '{0}' non ha una chiave primaria"
+
+msgctxt "core.field.code"
+msgid "Value of '{0}' cannot be longer than {1}"
+msgstr "Il valore di '{0}' non può essere più lungo di '{1}'"
+
+msgctxt "core.field.field"
+msgid "Code"
+msgstr "Codice"
+
+msgctxt "core.field.field"
+msgid "Integer"
+msgstr "Intero"
+
+msgctxt "core.field.field"
+msgid "Option"
+msgstr "Opzione"
+
+msgctxt "core.field.option"
+msgid "Field '{0}' has no options defined"
+msgstr "Il campo '{0}' non ha opzioni definite"
+
+msgctxt "core.object.unit"
+msgid "Table"
+msgstr "Tabella"
+
+msgctxt "core.object.unit"
+msgid "Codeunit"
+msgstr "Codeunit"
+
+msgctxt "core.object.unit"
+msgid "Report"
+msgstr "Report"
+
+msgctxt "core.object.unit"
+msgid "Page"
+msgstr "Pagina"
+
+msgctxt "core.object.unit"
+msgid "Query"
+msgstr "Query"
+
+msgctxt "core.utility.proxy"
+msgid "Invalid unit '{0}'"
+msgstr "Unit '{0}' non valida"
