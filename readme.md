@@ -119,6 +119,12 @@ Following URI are handled:
   * `/rpc` for REST API
   * `/ws` for websockets
 
+### Web Server Authentication
+It's possible to authenticate through security token:
+* Via Cookie with `core-auth-token` key
+* Via HTTP headers with `X-Core-AuthToken` key
+
+### REST API
 Through REST API only codeunit are served. Prefix `app.codeunit` is added automatically. Arguments can be passed 
 via URL with GET method or in HTTP body with POST metod. Arguments must be in JSON format, for example:
 
@@ -137,6 +143,66 @@ object, for example:
     "in app/base/codeunit/test.py line 6 'return a + b'"
     ], 
   "type": "exception"
+}
+```
+
+### Websocket
+Websocket protcol is the most powerful way to interact with Core application because it's
+a bidirectional way. 
+
+To invoke a method:
+```json
+{
+  "type": "invoke",
+  "classname": "app.myapp.codeunit.MathManagement",
+  "method": "sum",
+  "arguments": {
+    "a": 3,
+    "b": 4
+  }
+}
+```
+The result will be:
+```json
+{
+  "type": "result",
+  "value": 7
+}
+```
+In case of error the message is the same than REST API.
+
+A message is sent from server to client (or viceversa) in this way:
+```json
+{
+  "type": "message",
+  "value": ...
+}
+```
+To create an object and store it in the current session:
+```json
+{
+  "type": "create",
+  "classname": "app.myapp.codeunit.MathManagement"
+}
+```
+Return value is the ID of the object. To invoke a method
+on previously created object:
+```json
+{
+  "type": "invoke",
+  "objectid": "4d8eb808-7139-4d8e-926a-66f613745771",
+  "method": "sum",
+  "arguments": {
+    "a": 3,
+    "b": 4
+  }  
+}
+```
+Finally to destroy a created object:
+```json
+{
+  "type": "destroy",
+  "objectid": "4d8eb808-7139-4d8e-926a-66f613745771"
 }
 ```
 

@@ -4,6 +4,7 @@ import threading
 import asyncio
 import sys
 from typing import List, Callable
+#import ptvsd #fixme future
 import core.application
 import core.language
 import core.session
@@ -73,9 +74,13 @@ def worker_loop(args):
     """
 
     try:
+        #fixme future start for specific session, destroy process after debug
+        #daemon = ptvsd.enable_attach(('0.0.0.0', 3000))
+
         core.application.Application.initialize()
         core.application.Application._cli_loglevel = args['cli_loglevel']
         core.application.Application._log_lock = args['log_lock']
+        core.application.Application.sessions = args['sessions']
         
         core.application.Application.load_instance(args['instname'])
 
@@ -149,7 +154,8 @@ class Worker:
             'instname': core.application.Application.instance['name'],
             'cli_loglevel': core.application.Application._cli_loglevel,
             'log_lock': core.application.Application._log_lock,
-            'pipe': pipe_pair[1]
+            'pipe': pipe_pair[1],
+            'sessions': core.application.Application.sessions
         }  
 
         self.process = multiprocessing.Process(target=worker_loop, args=(args, ))
@@ -191,7 +197,6 @@ class ProcessPool:
     def __init__(self, max_workers):
         self.max_workers = max_workers
         self.pool = [] # type: List[Worker]
-        self.manager = multiprocessing.Manager()
         self.busy_event = threading.Event()
 
     def add_worker(self):
@@ -237,13 +242,6 @@ class ProcessPool:
         for worker in self.pool:
             worker.pipe.send({'message': 'reload', 'value': modulename})
               
-    async def enqueue_wait(self, control: ControlProxy, function, *args):
-        """
-        Enqueue a job and wait for result
-        """
-        worker = await self.enqueue(control, function, *args)
-        return await self.receive(worker)
-
     async def enqueue(self, control: ControlProxy, function, *args) -> Worker:
         """
         Enqueue a job in the first process available. If no one available will hold.
@@ -283,12 +281,6 @@ class ProcessPool:
                 await asyncio.get_event_loop().run_in_executor(None, self.busy_event.wait)
                 self.busy_event.clear()
 
-        return worker
-
-    async def receive(self, worker: Worker):
-        """
-        Wait the result for selected worker
-        """
         result = await worker.receive()
         
         worker.control = None

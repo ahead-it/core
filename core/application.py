@@ -4,7 +4,7 @@ import importlib
 import inspect
 from typing import Dict
 import json
-from core.session import Session
+from core.session import Session, SessionData
 from core.app import AppInfo
 import core
 import core.language
@@ -26,6 +26,8 @@ class Application:
     apps = {} # type: Dict[str, AppInfo]
     instance = {} # type: dict
     process_pool = None # type: core.process.ProcessPool
+    process_manager = None # type: multiprocessing.Manager
+    sessions = {} # type: Dict[str, SessionData]
     
     @staticmethod
     def initialize():
@@ -197,6 +199,9 @@ class Application:
         Start servers and process pools
         """
         try:
+            Application.process_manager = multiprocessing.Manager()
+            Application.sessions = Application.process_manager.dict()
+        
             Application.process_pool = core.process.ProcessPool(Application.instance['max_processes'])
             Application.process_pool.start()
 
@@ -222,6 +227,12 @@ class Application:
                 Application.process_pool.stop()
                 Application.process_pool = None
 
+            Application.sessions = {}
+
+            if Application.process_manager:
+                Application.process_manager.shutdown()
+                Application.process_manager = None
+                
         except:
             Application.logexception('strtsrvr')
      

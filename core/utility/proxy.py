@@ -6,6 +6,8 @@ from watchdog.events import FileSystemEventHandler
 from core.language import label
 import core.utility.system
 import core.application
+import core.object.unit
+import core.session
 
 
 class InvalidUnitException(Exception):
@@ -118,7 +120,10 @@ class Proxy:
             raise InvalidUnitException(unitname)
 
         self.object_class = getattr(mod, parts[2])
-        self.object = None
+        if not issubclass(self.object_class, core.object.unit.Unit):
+            raise InvalidUnitException(unitname)
+
+        self.object = None # type: core.object.unit.Unit
         self.unitname = parts[0] + '.' + parts[1]
         self.classname = parts[2]
 
@@ -145,5 +150,8 @@ class Proxy:
         """
         Invoke a method in the object
         """
+        if (not core.session.Session.authenticated) and (not self.is_public(method)):
+            raise Exception('Unauthorized access to method \'{0}\' in \'{1}\''.format(method, self.classname))
+
         method = getattr(self.object, method)
         return method(**kwargs)

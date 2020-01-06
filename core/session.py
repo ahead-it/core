@@ -3,12 +3,67 @@ import locale
 import uuid
 import os
 import socket
+from typing import Dict
 import core.application
+import core.object.unit
 import core.database.server
 import core.database.factory
 
 
-class Session():
+class SessionData():
+    """
+    Contains in memory session data
+    """
+    def __init__(self):
+        self.language_code = locale.getdefaultlocale()[0]
+        self.id = str(uuid.uuid4())
+        self.type = 'cli' 
+        self.user_id = ''
+        self.authenticated = False
+        self.objects = {} # type: Dict[str, core.object.unit]
+
+
+class SessionMeta(type):
+    """
+    Wraps SessionData for static object Session
+    """
+    def __init__(self, name, bases, dct):
+        super().__init__(name, bases, dct)
+        self.data = SessionData()
+
+    def __getattribute__(self, attr):
+        if attr != 'data':
+            if hasattr(self.data, attr):
+                return getattr(self.data, attr)
+
+        return super().__getattribute__(attr)
+
+    def initialize(self):
+        """
+        Create new container for session data and register itself in application
+        """
+        self.data = SessionData()
+
+    def load(self, sessionid):
+        """
+        Load session from memory
+        """
+        self.data = core.application.Application.sessions[sessionid]
+
+    def register(self):
+        """
+        Register session data in memory
+        """
+        core.application.Application.sessions[self.id] = self.data
+
+    def unregister(self):
+        """
+        Unregister session data from memory
+        """
+        del core.application.Application.sessions[self.id]
+
+
+class Session(metaclass=SessionMeta):
     """
     Define a session in the application server
     Each session is identified by an unqueidentifier; can be only a session for each process/thread
@@ -19,23 +74,17 @@ class Session():
         batch       running batch from application server
     """    
     process_id = os.getpid()
-    language_code = ''
-    id = ''
-    type = '' 
     hostname = socket.gethostname()
     database = None # type: core.database.server.Server
     db_id = None
-    user_id = ''
     connected = False
+    
+    language_code = ''
+    id = ''
+    type = '' 
+    user_id = ''
     authenticated = False
-
-    @staticmethod
-    def initialize():
-        Session.language_code = locale.getdefaultlocale()[0]
-        Session.id = str(uuid.uuid4())
-        Session.type = 'cli' 
-        Session.user_id = ''
-        Session.authenticated = False
+    objects = {} # type: Dict[str, core.object.unit]
         
     @staticmethod
     def connect():
