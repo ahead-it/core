@@ -10,6 +10,7 @@ class FieldType(Option):
     CODE = 1, label('Code')
     INTEGER = 2, label('Integer')
     OPTION = 3, label('Option')
+    TEXT = 4, label('Text')
 
 
 class Field():

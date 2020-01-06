@@ -89,6 +89,11 @@ class Server():
         Select next dataset from the database (pagination)
         """
 
+    def table_get(self, table: core.object.table.Table, pk):
+        """
+        Get record by primary key
+        """
+
     def from_sqlvalue(self, field: core.field.field.Field, value):
         """
         Convert sql value to core value

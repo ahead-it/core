@@ -324,7 +324,7 @@ class SqlServer(core.database.server.Server):
 
         n = self.execute(sql, pars)
         if n != 1:
-            table._raise_concurrencyerror()
+            table._error_concurrency()
         self._set_rowversion(table)
 
     def table_delete(self, table: core.object.table.Table):
@@ -334,7 +334,7 @@ class SqlServer(core.database.server.Server):
 
         n = self.execute(sql, pars)
         if n != 1:
-            table._raise_concurrencyerror()
+            table._error_concurrency()
 
     def _get_wherepk(self, table: core.object.table.Table, pars, with_timestamp=True):
         sql = ''
@@ -353,7 +353,7 @@ class SqlServer(core.database.server.Server):
 
         return sql
 
-    def _table_findset(self, table: core.object.table.Table, size, nextset, ascending):
+    def _table_findset(self, table: core.object.table.Table, size, nextset, ascending, pk):
         pars = []
         sql = 'SELECT TOP ' + str(size) + ' '
 
@@ -363,7 +363,14 @@ class SqlServer(core.database.server.Server):
         sql += '[timestamp] FROM [' + table._sqlname + ']'
 
         where = []
-        if nextset:
+        if pk:
+            i = 0
+            for field in table._primarykey:
+                where.append('([' + field.sqlname + '] = ?)')
+                pars.append(self.to_sqlvalue(field, pk[i]))
+                i += 1
+                
+        elif nextset:
             k = len(table._currentkey)
             l = k
             wn = []
@@ -383,29 +390,33 @@ class SqlServer(core.database.server.Server):
         if where:
             sql += ' WHERE ' + ' AND '.join(where)
 
-        sql += ' ORDER BY '
-        comma = False
-        for field in table._currentkey:
-            if comma:
-                sql += ', '
-            comma = True
-            sql += '[' + field.sqlname + ']'
-            if not ascending:
-                sql += ' DESC'
+        if not pk:
+            sql += ' ORDER BY '
+            comma = False
+            for field in table._currentkey:
+                if comma:
+                    sql += ', '
+                comma = True
+                sql += '[' + field.sqlname + ']'
+                if not ascending:
+                    sql += ' DESC'
 
         return self.query(sql, pars)
 
+    def table_get(self, table: core.object.table.Table, pk):
+        return self._table_findset(table, 1, False, False, pk)
+
     def table_findset(self, table: core.object.table.Table):
-        return self._table_findset(table, self.dataset_size, False, table._ascending)
+        return self._table_findset(table, self.dataset_size, False, table._ascending, None)
 
     def table_nextset(self, table: core.object.table.Table):
-        return self._table_findset(table, self.dataset_size, True, table._ascending)
+        return self._table_findset(table, self.dataset_size, True, table._ascending, None)
 
     def table_findfirst(self, table: core.object.table.Table):
-        return self._table_findset(table, 1, False, table._ascending)
+        return self._table_findset(table, 1, False, table._ascending, None)
 
     def table_findlast(self, table: core.object.table.Table):
-        return self._table_findset(table, 1, False, not (table._ascending ^ False))
+        return self._table_findset(table, 1, False, not (table._ascending ^ False), None)
 
     def table_loadrow(self, table: core.object.table.Table, row: dict):
         for field in table._fields:

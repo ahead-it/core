@@ -143,13 +143,16 @@ class Table(Unit):
         Event before deletion
         """
 
-    def _raise_concurrencyerror(self):
+    def _error_concurrency(self):
+        """
+        Concurrency error
+        """
         raise Exception(label('Another user has modified \'{0}\', restart the activity'.format(self._caption)))
 
-    def _raise_emptyerror(self):
+    def error_notfound(self):
         raise Exception('FIXME')
 
-    def findset(self, error_ifempty=True):
+    def findset(self):
         """
         Select a set of rows based on current key and filters
         """
@@ -157,8 +160,6 @@ class Table(Unit):
         self._currentrow = -1
         if len(self._dataset) > 0:
             return True
-        elif error_ifempty:
-            self._raise_emptyerror()
         else:
             return False
 
@@ -183,7 +184,18 @@ class Table(Unit):
         self._accept_changes()
         return True
 
-    def findfirst(self, error_ifempty=True):
+    def get(self, *pk):
+        """
+        Get record by primary key
+        """
+        self._dataset = core.session.Session.database.table_get(self, pk)
+        self._currentrow = -1
+        if len(self._dataset) > 0:
+            return self.read()
+        else:
+            return False
+
+    def findfirst(self):
         """
         Get first record from table
         """
@@ -191,12 +203,10 @@ class Table(Unit):
         self._currentrow = -1
         if len(self._dataset) > 0:
             return self.read()
-        elif error_ifempty:
-            self._raise_emptyerror()
         else:
             return False
 
-    def findlast(self, error_ifempty=True):
+    def findlast(self):
         """
         Get first record from table
         """
@@ -204,8 +214,6 @@ class Table(Unit):
         self._currentrow = -1
         if len(self._dataset) > 0:
             return self.read()
-        elif error_ifempty:
-            self._raise_emptyerror()
         else:
             return False
         

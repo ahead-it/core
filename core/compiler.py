@@ -117,7 +117,11 @@ class Merger:
                 continue
 
             # static and class members
-            members = [obj.__class__.__dict__, obj.__dict__] 
+            st = []
+            for m in dir(cla):
+                if not m in obj.__dict__:
+                    st.append(m)
+            members = [st, obj.__dict__] 
 
             for i in range(0, 2):
                 for m in members[i]:
@@ -154,13 +158,22 @@ class Merger:
 
         basemod = base[:base.rfind('.')]
         if not basemod in imp:
-            imp.append(basemod)           
+            imp.append(basemod)  
+
+        locmod = []
+        for i in imp:
+            if i.startswith('app.'):
+                locmod.append(i)
+        for i in locmod:
+            imp.remove(i)         
 
         buf.append('class ' + nam + '(' + base + '):\n')
         if stat > '':
             buf.append(stat)
 
         buf.append('    def __new__(cls):\n')
+        for i in locmod:
+            buf.append('        import ' + i + '\n')
         buf.append('        class _proxy(' + ', '.join(mros) + '):\n')
         buf.append('            pass\n')
         buf.append('        return _proxy()\n')

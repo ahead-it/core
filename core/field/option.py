@@ -27,6 +27,7 @@ class FieldOption(Field):
             self.xvalue = self.value
             break
 
-            
+    def checkvalue(self, value):
+        pass
 
     
