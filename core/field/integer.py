@@ -10,7 +10,7 @@ class FieldInteger(Field):
     """    
     def __init__(self, name, caption):
         super().__init__()
-        self.type = FieldType.INTEGER
+        self.type = FieldType().INTEGER
         self.name = name
         self.caption = caption
         self.sqlname = Convert.to_sqlname(name)

@@ -27,22 +27,12 @@ def gettext(text, modname, localecode):
 
     return text
 
-def label2(text, modname):
-    """
-    Search for a translation of text in loaded catalogs for the context of modname
-    in current language code
-    """
-    if modname == '':
-        return text
-
-    return gettext(text, modname, core.session.Session.language_code)
-
 def label(text):
     """
     Search for a translation of text in loaded catalogs in the current context 
     in current language code
     """    
-    return label2(text, core.utility.system.System.get_caller_modulename())
+    return gettext(text, core.utility.system.System.get_caller_modulename(), core.session.Session.language_code)
 
 def mergecatalog(filename):
     """

@@ -5,19 +5,20 @@ from core.utility.system import error
 from core.language import label
 
 
-class FieldOption(Field):
+class FieldOption(Field, Option):
     """
     Field of type OPTION
     """    
-    def __init__(self, name, caption, optclass: Option):
-        super().__init__()
-        self.type = FieldType.OPTION
-        self.option_class = optclass
+    def __init__(self, name='', caption=''):
+        self._options()
+        Field.__init__(self)
+        
+        self.type = FieldType().OPTION
         self.name = name
         self.caption = caption
         self.sqlname = Convert.to_sqlname(name)
 
-        opts = optclass.getoptions()
+        opts = self.getoptions()
         if not opts:
             error(label('Field \'{0}\' has no options defined'.format(name)))
 
@@ -28,6 +29,6 @@ class FieldOption(Field):
             break
 
     def checkvalue(self, value):
-        pass
+        return value
 
     

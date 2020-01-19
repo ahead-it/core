@@ -39,6 +39,22 @@ from core import *
 from app import table, codeunit
 ```
 
+## Option
+Options are special enumerations that defines tuples as
+class members with the first item as integer value, the second
+item as caption (so translated).
+
+```python
+class SalesHeaderType(Option):
+    def _options(self):
+        self.QUOTE = 0, label('Quote')
+        self.ORDER = 1, label('Order')
+        self.INVOICE = 2, label('Invoice')
+        self.RETURNORDER = 3, label('Return order')
+        self.CREDITMEMO = 4, label('Credit memo')
+        self.BLANKETORDER = 5, label('Blanket order')
+```
+
 ## Unit
 All objects derives from `Unit` class and must declare a name and a caption in 
 the `_init` method:
@@ -126,6 +142,33 @@ class Customer(Table):
         postmgmt.check(self.postcode.value)
 ```
 
+## Fields
+### FieldOption
+Here's the syntax to define a FieldOption:
+
+```python
+class SalesHeaderType(FieldOption):
+    def _options(self):
+        self.QUOTE = 0, label('Quote')
+        self.ORDER = 1, label('Order')
+        self.INVOICE = 2, label('Invoice')
+        self.RETURNORDER = 3, label('Return order')
+        self.CREDITMEMO = 4, label('Credit memo')
+        self.BLANKETORDER = 5, label('Blanket order')
+```
+
+After defined, use it in table creation:
+```python
+class SalesHeader(Table):
+    def _init(self):
+        self._name = 'Sales Header'
+        self._caption = label('Sales Header')
+
+        self.documenttype = SalesHeaderType('Document Type', label('Document type'))
+        self.no = FieldCode('No.', label('No.'), 20)
+
+        self._setprimarykey(self.documenttype, self.no)
+```
 
 ## Access control
 ### Public method

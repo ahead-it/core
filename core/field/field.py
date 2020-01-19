@@ -6,11 +6,12 @@ class FieldType(Option):
     """
     Defines the types of field supported by the application
     """
-    NONE = 0, ''
-    CODE = 1, label('Code')
-    INTEGER = 2, label('Integer')
-    OPTION = 3, label('Option')
-    TEXT = 4, label('Text')
+    def _options(self):
+        self.NONE = 0, ''
+        self.CODE = 1, label('Code')
+        self.INTEGER = 2, label('Integer')
+        self.OPTION = 3, label('Option')
+        self.TEXT = 4, label('Text')
 
 
 class Field():
@@ -21,7 +22,7 @@ class Field():
         self.name = ''
         self.caption = ''
         self.sqlname = ''
-        self.type = FieldType.NONE
+        self.type = FieldType().NONE
         self.value = None
         self.initvalue = None
         self.xvalue = None

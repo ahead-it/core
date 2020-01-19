@@ -13,7 +13,7 @@ class Table(Unit):
     """
     def __init__(self):
         super().__init__()
-        self._type = UnitType.TABLE
+        self._type = UnitType().TABLE
         self._primarykey = [] # type: List[Field]
         self._indexes = {} # type: Dict[str, List[Field]]        
         self._init()

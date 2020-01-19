@@ -91,20 +91,20 @@ class SqlServer(core.database.server.Server):
 
     def _get_fieldtype(self, field: Field):
         res = ''
-        if field.type == FieldType.CODE:
+        if field.type == FieldType().CODE:
             res += 'nvarchar(' + str(field.length) + ') NOT NULL'
 
-        elif field.type in [FieldType.INTEGER]:
+        elif field.type in [FieldType().INTEGER]:
             res += 'int'
             if field.autoincrement:
                 res += ' IDENTITY(1,1)'
             res += ' NOT NULL'
 
-        elif field.type in [FieldType.OPTION]:
+        elif field.type in [FieldType().OPTION]:
             res += 'int NOT NULL'
 
         else:
-            raise Exception(label('Unknown field type \'{0}\''.format(FieldType.getcaption(field.type))))
+            raise Exception(label('Unknown field type \'{0}\''.format(field.type[1])))
 
         return res
                 
@@ -161,9 +161,9 @@ class SqlServer(core.database.server.Server):
                 sql = 'ALTER TABLE [' + table._sqlname + '] ADD '
                 sql += '[' + field.sqlname + '] ' + self._get_fieldtype(field) 
                 sql += ' CONSTRAINT [' + field.sqlname + '$DEF] DEFAULT '
-                if field.type in [FieldType.CODE]:
+                if field.type in [FieldType().CODE]:
                     sql += '\'\''
-                elif field.type in [FieldType.INTEGER, FieldType.OPTION]:
+                elif field.type in [FieldType().INTEGER, FieldType().OPTION]:
                     sql += '0'
                 self.execute(sql)
 
@@ -231,27 +231,27 @@ class SqlServer(core.database.server.Server):
 
     def from_sqlvalue(self, field: Field, value):
         res = None
-        if field.type in [FieldType.CODE, FieldType.INTEGER]:
+        if field.type in [FieldType().CODE, FieldType().INTEGER]:
             res = value
 
-        elif field.type == FieldType.OPTION:
-            res = core.object.option.Option.getoptions()[value]
+        elif field.type == FieldType().OPTION:
+            res = field.getoptions()[value]
 
         else:
-            raise Exception(label('Unknown field type \'{0}\''.format(FieldType.getcaption(field.type))))
+            raise Exception(label('Unknown field type \'{0}\''.format(field.type[1])))
 
         return res
 
     def to_sqlvalue(self, field: Field, value):
         res = None
-        if field.type in [FieldType.CODE, FieldType.INTEGER]:
+        if field.type in [FieldType().CODE, FieldType().INTEGER]:
             res = value
 
-        elif field.type == FieldType.OPTION:
-            res = core.object.option.Option.getvalue(value)
+        elif field.type == FieldType().OPTION:
+            res = value[0]
 
         else:
-            raise Exception(label('Unknown field type \'{0}\''.format(FieldType.getcaption(field.type))))
+            raise Exception(label('Unknown field type \'{0}\''.format(field.type[1])))
 
         return res
 
@@ -266,7 +266,7 @@ class SqlServer(core.database.server.Server):
         identity_insert = False
         fields = []
         for field in table._fields:
-            if field.type in [FieldType.INTEGER]:
+            if field.type in [FieldType().INTEGER]:
                 if field.autoincrement:
                     identity_field = field
                     if field.value == 0:

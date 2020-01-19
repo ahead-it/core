@@ -8,12 +8,13 @@ class UnitType(Option):
     """
     Defines the types of Unit
     """
-    NONE = 0, ''
-    TABLE = 1, label("Table")
-    CODEUNIT = 2, label("Codeunit")
-    REPORT = 3, label("Report")
-    PAGE = 4, label("Page")
-    QUERY = 5, label("Query")
+    def _options(self):
+        self.NONE = 0, ''
+        self.TABLE = 1, label("Table")
+        self.CODEUNIT = 2, label("Codeunit")
+        self.REPORT = 3, label("Report")
+        self.PAGE = 4, label("Page")
+        self.QUERY = 5, label("Query")
 
 
 class Unit:
@@ -22,7 +23,7 @@ class Unit:
     Multiple units defines an app; each unit is identified by a UUID
     """
     def __init__(self):
-        self._type = UnitType.NONE
+        self._type = UnitType().NONE
         self._name = ""
         self._caption = ""
         self._id = str(uuid.uuid4())

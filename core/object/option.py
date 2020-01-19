@@ -1,6 +1,4 @@
 import inspect
-from core.language import label2
-import core.utility.system
 
 
 class Option:
@@ -22,43 +20,34 @@ class Option:
         If CAPTION = ' ' will be shown
     """
 
-    @classmethod
-    def getname(cls, member):
+    def __init__(self):
+        self._options()
+
+    def _options(self):
+        """
+        To be overriden to set options
+        """
+
+    def getoptname(self, member):
         """
         Returns name of the member
         """
-        m = inspect.getmembers(cls)
+        m = inspect.getmembers(self)
         for o in m:
             if o[1] == member:
                 return o[0]
         return ""
 
-    @classmethod
-    def getcaption(cls, member):
-        """
-        Returns caption of the member
-        """
-        modname = core.utility.system.System.get_modulename(inspect.getfile(cls))
-        return label2(member[1], modname)
-
-    @classmethod
-    def getvalue(cls, member):
-        """
-        Returns value of the membmer
-        """
-        return member[0]
-
-    @classmethod
-    def getoptions(cls):
+    def getoptions(self):
         """
         Returns dict with all members
         Key is value
         Value is tuple
         """
         result = dict()
-        m = inspect.getmembers(cls)
+        m = inspect.getmembers(self)
         for o in m:
-            if (not o[0].startswith("_")) and isinstance(o[1], tuple):
+            if (not o[0].startswith("_")) and isinstance(o[1], tuple) and (o[0][0:1] == o[0][0:1].upper()):
                 result[o[1][0]] = o[1]
 
         return result
