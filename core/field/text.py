@@ -10,7 +10,7 @@ class FieldText(Field):
     """    
     def __init__(self, name, caption, length):
         super().__init__()
-        self.type = FieldType().TEXT
+        self.type = FieldType.TEXT
         self.length = length
         self.name = name
         self.caption = caption

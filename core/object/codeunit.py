@@ -8,7 +8,7 @@ class Codeunit(Unit):
     """
     def __init__(self):
         super().__init__()
-        self._type = UnitType().CODEUNIT
+        self._type = UnitType.CODEUNIT
         self._init()
         self._init_check()
         

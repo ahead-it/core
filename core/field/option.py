@@ -5,30 +5,35 @@ from core.utility.system import error
 from core.language import label
 
 
-class FieldOption(Field, Option):
+class FieldOption(Field):
     """
     Field of type OPTION
     """    
-    def __init__(self, name='', caption=''):
-        self._options()
-        Field.__init__(self)
+    def __init__(self, name, caption, optclass):
+        super().__init__()
         
-        self.type = FieldType().OPTION
+        self.type = FieldType.OPTION
         self.name = name
         self.caption = caption
-        self.sqlname = Convert.to_sqlname(name)
+        self.sqlname = Convert.to_sqlname(self.name)
 
-        opts = self.getoptions()
+        if not issubclass(optclass, Option):
+            error(label('Invalid option class \'{0}\''.format(optclass)))
+
+        opts = optclass.options()
         if not opts:
-            error(label('Field \'{0}\' has no options defined'.format(name)))
+            error(label('Field \'{0}\' has no options defined'.format(self.caption)))
 
         for opt in opts:
-            self.value = opts[opt]
+            self.value = opt
             self.initvalue = self.value
             self.xvalue = self.value
             break
 
     def checkvalue(self, value):
+        if not isinstance(value, int):
+           error(label('Value \'{0}\' is not valid for \'{1}\''.format(value, self.caption)))
+
         return value
 
     

@@ -46,13 +46,12 @@ item as caption (so translated).
 
 ```python
 class SalesHeaderType(Option):
-    def _options(self):
-        self.QUOTE = 0, label('Quote')
-        self.ORDER = 1, label('Order')
-        self.INVOICE = 2, label('Invoice')
-        self.RETURNORDER = 3, label('Return order')
-        self.CREDITMEMO = 4, label('Credit memo')
-        self.BLANKETORDER = 5, label('Blanket order')
+    QUOTE = 0, label('Quote')
+    ORDER = 1, label('Order')
+    INVOICE = 2, label('Invoice')
+    RETURNORDER = 3, label('Return order')
+    CREDITMEMO = 4, label('Credit memo')
+    BLANKETORDER = 5, label('Blanket order')
 ```
 
 ## Unit
@@ -134,6 +133,11 @@ field
 Example:
 ```python
 class Customer(Table):
+    def _init(self):
+        ...
+        self.postcode = FieldCode('Post Code', label('Post code'), 10)
+        ...
+        
     def _oninsert(self):
         self.createdatetme = datetime.now()
 
@@ -147,27 +151,19 @@ class Customer(Table):
 Here's the syntax to define a FieldOption:
 
 ```python
-class SalesHeaderType(FieldOption):
-    def _options(self):
-        self.QUOTE = 0, label('Quote')
-        self.ORDER = 1, label('Order')
-        self.INVOICE = 2, label('Invoice')
-        self.RETURNORDER = 3, label('Return order')
-        self.CREDITMEMO = 4, label('Credit memo')
-        self.BLANKETORDER = 5, label('Blanket order')
-```
+class SalesHeaderType(Option):
+    QUOTE = 0, label('Quote')
+    ORDER = 1, label('Order')
+    INVOICE = 2, label('Invoice')
+    RETURNORDER = 3, label('Return order')
+    CREDITMEMO = 4, label('Credit memo')
+    BLANKETORDER = 5, label('Blanket order')
 
-After defined, use it in table creation:
-```python
 class SalesHeader(Table):
     def _init(self):
-        self._name = 'Sales Header'
-        self._caption = label('Sales Header')
-
-        self.documenttype = SalesHeaderType('Document Type', label('Document type'))
-        self.no = FieldCode('No.', label('No.'), 20)
-
-        self._setprimarykey(self.documenttype, self.no)
+        ...
+        self.documenttype = FieldOption('Document Type', label('Document type'), SalesHeaderType)
+        ...
 ```
 
 ## Access control

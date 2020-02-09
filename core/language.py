@@ -7,7 +7,7 @@ from babel.messages.pofile import read_po
 import core.session
 import core.utility.system
 
-
+_suspend_translation = False 
 _catalogs = dict()
 
 def gettext(text, modname, localecode):
@@ -32,7 +32,26 @@ def label(text):
     Search for a translation of text in loaded catalogs in the current context 
     in current language code
     """    
+    if _suspend_translation:
+        return text
+
+    if not hasattr(core, 'session'):
+        return text
+    
     return gettext(text, core.utility.system.System.get_caller_modulename(), core.session.Session.language_code)
+
+def label_module(text, modulename):
+    """
+    Search for a translation of text in loaded catalogs in the current context 
+    in current language code
+    """    
+    if _suspend_translation:
+        return text
+
+    if not hasattr(core, 'session'):
+        return text
+    
+    return gettext(text, modulename, core.session.Session.language_code)
 
 def mergecatalog(filename):
     """

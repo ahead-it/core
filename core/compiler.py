@@ -3,6 +3,7 @@ import datetime
 import importlib
 import inspect
 import sys
+from typing import Dict
 from babel.core import Locale
 from babel.messages.pofile import write_po
 from babel.messages.extract import extract_from_file
@@ -14,8 +15,7 @@ from core.object.unit import Unit
 from core.object.option import Option
 from core.utility.system import System
 from core.object import attributes
-from typing import Dict
-
+import core.language
 
 _objs = ('option', 'table', 'codeunit', 'report', 'page', 'query')
 
@@ -118,6 +118,8 @@ class Merger:
                 Application.logexception('genproxy')
                 continue
 
+        isoption = (base == 'core.object.option.Option')
+
         for mro in fullmro:
             # instance members
             for m in mro.__dict__:
@@ -132,8 +134,16 @@ class Merger:
 
                     body += '    def ' + m + '(' + ', '.join(attr.__code__.co_varnames) + '):\n'
                     body += '        pass\n'
+                elif isoption:
+                    qn = mro.__module__ + '.' + mro.__qualname__
+                    i = qn.rfind('.')
+                    qn = qn[0:i]
+                    capt = mro.caption(attr)
+                    capt = capt.replace('\'', '\\\'')
 
-            if phase != 2:
+                    body += '    ' + m + ' = ' + str(attr) + ', \'' + capt + '\', \'' + qn + '\'\n'
+
+            if (phase != 2) or isoption:
                 continue
 
             try:
@@ -144,11 +154,6 @@ class Merger:
                         continue
 
                     attr = getattr(obj, m)
-
-                    if (base in ['core.field.option.FieldOption', 'core.object.option.Option']) and \
-                       ((m[0:1] != m[0:1].upper()) or (not isinstance(attr, tuple))):
-                       continue
-                      
                     members.append(m)    
 
                     qn = type(attr).__qualname__
@@ -177,12 +182,14 @@ class Merger:
         # write body
         buf = []
         buf.append('class ' + nam + '(' + base + '):\n')
-        buf.append('    def __new__(cls, *args, **kwargs):\n')
-        for i in locmod:
-            buf.append('        import ' + i + '\n')
-        buf.append('        class proxy(' + ', '.join(mros) + '):\n')
-        buf.append('            pass\n')
-        buf.append('        return proxy(*args, **kwargs)\n')
+
+        if not isoption:
+            buf.append('    def __new__(cls, *args, **kwargs):\n')
+            for i in locmod:
+                buf.append('        import ' + i + '\n')
+            buf.append('        class proxy(' + ', '.join(mros) + '):\n')
+            buf.append('            pass\n')
+            buf.append('        return proxy(*args, **kwargs)\n')
 
         if init > '':
             buf.append('    def __init__(self):\n')
@@ -199,6 +206,8 @@ class Merger:
         Generate symbols in two pass, first static members and properties, next
         intance members and properties
         """
+        core.language._suspend_translation = True
+
         self._merge()        
         self._generate_symbols(1)
 
@@ -208,6 +217,7 @@ class Merger:
                 importlib.reload(sys.modules[modulename])
 
         self._generate_symbols(2)
+        core.language._suspend_translation = False
 
     def _generate_symbols(self, phase):
         """

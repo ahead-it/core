@@ -54,6 +54,26 @@ class System():
         return modname[:n]
 
     @staticmethod
+    def get_caller_class(stack=2):
+        """
+        Get caller class, none if outside class
+        """
+        frame = inspect.stack()[stack]
+        if 'self' in frame[0].f_locals:
+            return frame[0].f_locals['self'].__class__
+        else:
+            return None
+
+    @staticmethod
+    def get_caller_filename(stack=2):
+        """
+        Get caller filename
+        """
+        frame = inspect.stack()[stack]
+        module = inspect.getmodule(frame[0])
+        return module.__file__
+       
+    @staticmethod
     def get_caller_modulename(stack=2):
         """
         Get the Core module name of the caller

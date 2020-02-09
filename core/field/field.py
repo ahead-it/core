@@ -6,12 +6,13 @@ class FieldType(Option):
     """
     Defines the types of field supported by the application
     """
-    def _options(self):
-        self.NONE = 0, ''
-        self.CODE = 1, label('Code')
-        self.INTEGER = 2, label('Integer')
-        self.OPTION = 3, label('Option')
-        self.TEXT = 4, label('Text')
+    NONE = 0, ''
+    CODE = 1, label('Code')
+    INTEGER = 2, label('Integer')
+    OPTION = 3, label('Option')
+    TEXT = 4, label('Text')
+    BIGINTEGER = 5, label('Big Integer')
+    DECIMAL = 6, label('Decimal')
 
 
 class Field():
@@ -22,7 +23,7 @@ class Field():
         self.name = ''
         self.caption = ''
         self.sqlname = ''
-        self.type = FieldType().NONE
+        self.type = FieldType.NONE
         self.value = None
         self.initvalue = None
         self.xvalue = None
@@ -34,6 +35,36 @@ class Field():
 
         if not handled:
             super().__setattr__(key, value)
+
+    def __add__(self, other):
+        return self.value + self.checkvalue(other)
+
+    def __radd__(self, other):
+        return self.value + self.checkvalue(other)
+        
+    def __sub__(self, other):
+        return self.value - self.checkvalue(other)
+
+    def __rsub__(self, other):
+        return self.value - self.checkvalue(other)
+
+    def __eq__(self, other):
+        return self.value == other 
+
+    def __ne__(self, other):
+        return self.value != other             
+
+    def __lt__(self, other):
+        return self.value < other             
+
+    def __gt__(self, other):
+        return self.value > other             
+
+    def __le__(self, other):
+        return self.value <= other             
+
+    def __ge__(self, other):
+        return self.value >= other             
 
     def init(self):
         """
@@ -48,3 +79,8 @@ class Field():
         """
         return value
         
+    def convertvalue(self, value):
+        """
+        Convert value in the right type
+        """
+        return value

@@ -2,13 +2,13 @@ from core.utility.convert import Convert
 from core.field.field import Field, FieldType
 
 
-class FieldInteger(Field):
+class FieldBigInteger(Field):
     """
-    Field of type INTEGER
+    Field of type BIGINTEGER
     """    
     def __init__(self, name, caption):
         super().__init__()
-        self.type = FieldType.INTEGER
+        self.type = FieldType.BIGINTEGER
         self.name = name
         self.caption = caption
         self.sqlname = Convert.to_sqlname(name)

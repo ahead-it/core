@@ -10,6 +10,9 @@ from core.field.field import FieldType
 from core.field.code import FieldCode
 from core.field.option import FieldOption
 from core.field.integer import FieldInteger
+from core.field.biginteger import FieldBigInteger
+from core.field.text import FieldText
+from core.field.decimal import FieldDecimal
 from core.object.table import Table
 
 from core.utility.convert import Convert
