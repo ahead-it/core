@@ -101,4 +101,5 @@ def commit():
     """
     Commit to the database
     """
-    core.session.Session.database.commit()
+    if core.session.Session.database:
+        core.session.Session.database.commit()
