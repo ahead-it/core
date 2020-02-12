@@ -1,3 +1,5 @@
+from datetime import date
+
 from core.application import Application
 from core.app import App, AppInfo
 from core.session import Session
@@ -13,6 +15,7 @@ from core.field.integer import FieldInteger
 from core.field.biginteger import FieldBigInteger
 from core.field.text import FieldText
 from core.field.decimal import FieldDecimal
+from core.field.date import FieldDate
 from core.object.table import Table
 
 from core.utility.convert import Convert

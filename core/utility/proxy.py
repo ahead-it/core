@@ -1,5 +1,6 @@
 import importlib
 import hashlib
+import inspect
 import sys
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -7,7 +8,12 @@ from core.language import label
 import core.utility.system
 import core.application
 import core.object.unit
+import core.object.codeunit
+import core.object.table
 import core.session
+
+
+_allowed_types = ['codeunit', 'page', 'query', 'report', 'table']
 
 
 class InvalidUnitException(Exception):
@@ -112,7 +118,7 @@ class Proxy:
         parts = unitname.split('.')
         if (len(parts) != 3) or \
             (parts[0] != 'app') or \
-            (parts[1] not in ['codeunit', 'page', 'query', 'report', 'table']):
+            (parts[1] not in _allowed_types):
             raise InvalidUnitException(unitname)
 
         mod = importlib.import_module(parts[0] + '.' + parts[1])
@@ -137,14 +143,16 @@ class Proxy:
         """
         Returns True if object is decorated with @PublicMethod
         """
-        mod = importlib.import_module('app.map')
-        funs = getattr(mod, 'functions')
-        mn = self.unitname + '/' + self.classname + '.' + method
-        if mn not in funs:
-            return False
-        if 'public' not in funs[mn]:
-            return False
         return True
+        # FIXME
+        #mod = importlib.import_module('app.map')
+        #funs = getattr(mod, 'functions')
+        #mn = self.unitname + '/' + self.classname + '.' + method
+        #if mn not in funs:
+        #    return False
+        #if 'public' not in funs[mn]:
+        #    return False
+        #return True
 
     def invoke(self, method, **kwargs):
         """
@@ -155,3 +163,29 @@ class Proxy:
 
         method = getattr(self.object, method)
         return method(**kwargs)
+
+    @staticmethod
+    def get_units(unittype=''):
+        if (unittype > '') and (unittype not in _allowed_types):
+            raise Exception(label('Invalid unit type \'{0}\''.format(unittype)))
+
+        if unittype > '':
+            types = [unittype, ]
+        else:
+            types = _allowed_types
+
+        res = []
+
+        for t in types:
+            mod = importlib.import_module('app.' + t)
+            for name, obj in inspect.getmembers(mod):
+                if not inspect.isclass(obj):
+                    continue
+                if not issubclass(obj, core.object.unit.Unit):
+                    continue
+                if (unittype == 'table') and (not issubclass(obj, core.object.table.Table)):
+                    continue
+
+                res.append(obj)
+        
+        return res

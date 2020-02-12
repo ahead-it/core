@@ -73,10 +73,22 @@ class RpcHandler(tornado.web.RequestHandler):
     async def post(self, path):
         await self._handle('POST', path)
 
+    async def options(self, path):
+        self._set_headers()
+        self.set_status(204)        
+        self.finish()
+
+    def _set_headers(self):
+        self.set_header('Access-Control-Allow-Origin', '*')
+        self.set_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')    
+
     async def _handle(self, method, path):
         """
         Generic GET/POST handler
         """
+        self._set_headers()
+        
         try:
             if (method == 'POST') and \
                ('Content-Type' in self.request.headers) and \

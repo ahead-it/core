@@ -13,6 +13,7 @@ class FieldType(Option):
     TEXT = 4, label('Text')
     BIGINTEGER = 5, label('Big Integer')
     DECIMAL = 6, label('Decimal')
+    DATE = 7, label('Date')
 
 
 class Field():
@@ -20,6 +21,9 @@ class Field():
     Base field implementation
     """
     def __init__(self):
+        self._codename = ''
+        self._parent = None
+        self._relations = []
         self.name = ''
         self.caption = ''
         self.sqlname = ''
@@ -84,3 +88,39 @@ class Field():
         Convert value in the right type
         """
         return value
+
+    def validate(self, value):
+        """
+        Assign value an trigger on validate method
+        """
+        self.value = value
+        m = '_onvalidate_' + self._codename
+        if self._parent and hasattr(self._parent, m):
+            a = getattr(self._parent, m)
+            a()
+            
+    def related(self, to, field=None, when=None, filters=None):
+        """
+        Add a relation to other table
+        
+        to -- target table (class)
+        field -- field to return (string)
+        when -- conditions if relation is true (lambda returns tuple)
+        filters -- filters applied to target (lamba called with table object returns tuple)
+        """
+
+        if field is None:
+            tab = to()
+            if not tab._primarykey:
+                tab._error_noprimarykey()
+            field = tab._primarykey[0]
+            if field._codename == '':
+                raise Exception('Field \'{0}\' in \'{1}\' has not codename'.format(field.caption, tab._caption))
+            field = field._codename
+
+        self._relations.append({
+            "to": to,
+            "field": field,
+            "when": when,
+            "filters": filters
+        })

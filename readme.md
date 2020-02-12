@@ -9,6 +9,7 @@ for each process.
 ## Installation
 Core requirements:
 * [Python](https://www.python.org/downloads/) 3.8 or more
+* [pyodbc](https://github.com/mkleehammer/pyodbc) for database access
 * [Tornado](https://www.tornadoweb.org/) as web server
 * [pyOpenSSL](https://www.pyopenssl.org/) for secure the communication
 * [Babel](http://babel.pocoo.org/) for internationalization

@@ -3,6 +3,7 @@ from core.object.unit import Unit
 from core.object.unit import UnitType
 from core.field.field import Field
 from core.utility.convert import Convert
+from core.utility.proxy import Proxy
 from core.language import label
 import core.session
 
@@ -28,12 +29,12 @@ class Table(Unit):
         self._sqlname = Convert.to_sqlname(self._name)
 
         self._fields = [] # type: List[Field]
-        self._fieldnames = [] # type: List[str]
         for m in self.__dict__:
             a = getattr(self, m)
             if issubclass(type(a), Field):
+                a._parent = self
+                a._codename = m
                 self._fields.append(a)
-                self._fieldnames.append(m)
 
         self.setcurrentkey()
 
@@ -149,7 +150,16 @@ class Table(Unit):
         """
         raise Exception(label('Another user has modified \'{0}\', restart the activity'.format(self._caption)))
 
+    def _error_noprimarykey(self):
+        """
+        No primary key error
+        """
+        raise Exception(label('Table \'{0}\' has not primary key'.format(self._caption)))
+
     def error_notfound(self):
+        """
+        Record not found error
+        """
         raise Exception('FIXME')
 
     def findset(self):
@@ -217,3 +227,34 @@ class Table(Unit):
         else:
             return False
         
+    def rename(self, *newkey):
+        """
+        Change primary key of record raising rename trigger and ajusting related table
+        """
+        if not self._primarykey:
+            self._error_noprimarykey()
+
+        if len(self._primarykey) != len(newkey):
+            raise Exception('New primary key mismatch')
+
+        pknames = []
+        for f in self._primarykey:
+            pknames.append(f._codename)
+
+        tables = Proxy.get_units('table')
+        for t in tables:
+            tab = t()
+            for f in tab._fields:
+                for r in f._relations:
+                    to = r['to']() 
+                    if self.__class__ is not to.__class__:
+                        continue
+                    
+                    if r['field'] not in pknames:
+                        continue
+
+                    cf = getattr(self, r['field'])
+                    idx = pknames.index(r['field'])
+
+                    print('Change ' + tab._caption + ' field ' + f.caption + ' from ' + cf.value + ' to ' + newkey[idx])
+

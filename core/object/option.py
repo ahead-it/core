@@ -3,6 +3,9 @@ import core.utility.system
 
 
 class OptionMeta(type):
+    """
+    Metaclass for option
+    """
     def __init__(self, name, bases, dct):
         super().__init__(name, bases, dct)
         self._captions = {}
@@ -46,6 +49,9 @@ class Option(metaclass=OptionMeta):
 
     @classmethod
     def caption(cls, value):
+        """
+        Return caption of the option
+        """
         if value in cls._captions:
             return core.language.label_module(cls._captions[value], cls._modules[value])
         else:
@@ -53,6 +59,9 @@ class Option(metaclass=OptionMeta):
 
     @classmethod
     def name(cls, value):
+        """
+        Return name of the option
+        """        
         if value in cls._options:
             return cls._options[value]
         else:
@@ -60,6 +69,9 @@ class Option(metaclass=OptionMeta):
 
     @classmethod
     def options(cls, return_captions=True):
+        """
+        Return dictionary of defined options
+        """        
         if return_captions:
             return cls._captions
         else:

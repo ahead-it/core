@@ -92,7 +92,13 @@ class System():
 
 
 def error(message):
+    """
+    Raise an exception with provided message
+    """
     raise Exception(message)
 
 def commit():
+    """
+    Commit to the database
+    """
     core.session.Session.database.commit()

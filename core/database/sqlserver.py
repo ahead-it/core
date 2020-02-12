@@ -1,4 +1,5 @@
 from typing import List
+from datetime import datetime, date, time
 import pyodbc
 import core.database.server
 import core.object.option
@@ -91,7 +92,7 @@ class SqlServer(core.database.server.Server):
 
     def _get_fieldtype(self, field: Field):
         res = ''
-        if field.type == FieldType.CODE:
+        if field.type in [FieldType.CODE, FieldType.TEXT]:
             res += 'nvarchar(' + str(field.length) + ') NOT NULL'
 
         elif field.type in [FieldType.INTEGER]:
@@ -108,7 +109,11 @@ class SqlServer(core.database.server.Server):
 
         elif field.type in [FieldType.DECIMAL]:
             res += 'decimal(38,20)'
-            res += ' NOT NULL'            
+            res += ' NOT NULL'  
+
+        elif field.type in [FieldType.DATE]:
+            res += 'datetime'
+            res += ' NOT NULL'    
 
         elif field.type in [FieldType.OPTION]:
             res += 'int NOT NULL'
@@ -171,10 +176,12 @@ class SqlServer(core.database.server.Server):
                 sql = 'ALTER TABLE [' + table._sqlname + '] ADD '
                 sql += '[' + field.sqlname + '] ' + self._get_fieldtype(field) 
                 sql += ' CONSTRAINT [' + field.sqlname + '$DEF] DEFAULT '
-                if field.type in [FieldType.CODE]:
+                if field.type in [FieldType.CODE, FieldType.TEXT]:
                     sql += '\'\''
                 elif field.type in [FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.DECIMAL, FieldType.OPTION]:
                     sql += '0'
+                elif field.type in [FieldType.DATE]:
+                    sql += '\'17530101\''                    
                 self.execute(sql)
 
                 sql = 'ALTER TABLE [' + table._sqlname + '] '
@@ -233,7 +240,7 @@ class SqlServer(core.database.server.Server):
 
     def table_compile(self, table: core.object.table.Table):
         if not table._primarykey:
-            raise Exception(label('Table \'{0}\' has not primary key'.format(table._caption)))
+            table._error_noprimarykey()
 
         self._process_table(table)
 
@@ -241,11 +248,11 @@ class SqlServer(core.database.server.Server):
 
     def from_sqlvalue(self, field: Field, value):
         res = None
-        if field.type in [FieldType.CODE, FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.DECIMAL]:
+        if field.type in [FieldType.CODE, FieldType.TEXT, FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.DECIMAL, FieldType.OPTION]:
             res = value
 
-        elif field.type == FieldType.OPTION:
-            res = field.getoptions()[value]
+        elif field.type == FieldType.DATE:
+            res = value.date()
 
         else:
             raise Exception(label('Unknown field type \'{0}\''.format(field.type[1])))
@@ -254,11 +261,11 @@ class SqlServer(core.database.server.Server):
 
     def to_sqlvalue(self, field: Field, value):
         res = None
-        if field.type in [FieldType.CODE, FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.DECIMAL]:
+        if field.type in [FieldType.CODE, FieldType.TEXT, FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.DECIMAL, FieldType.OPTION]:
             res = value
 
-        elif field.type == FieldType.OPTION:
-            res = value[0]
+        elif field.type == FieldType.DATE:
+            res = datetime.combine(value, time(0, 0, 0))
 
         else:
             raise Exception(label('Unknown field type \'{0}\''.format(field.type[1])))

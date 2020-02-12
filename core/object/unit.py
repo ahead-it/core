@@ -9,11 +9,11 @@ class UnitType(Option):
     Defines the types of Unit
     """
     NONE = 0, ''
-    TABLE = 1, label("Table")
-    CODEUNIT = 2, label("Codeunit")
-    REPORT = 3, label("Report")
-    PAGE = 4, label("Page")
-    QUERY = 5, label("Query")
+    TABLE = 1, label('Table')
+    CODEUNIT = 2, label('Codeunit')
+    REPORT = 3, label('Report')
+    PAGE = 4, label('Page')
+    QUERY = 5, label('Query')
 
 
 class Unit:
