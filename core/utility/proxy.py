@@ -143,29 +143,30 @@ class Proxy:
         """
         Returns True if object is decorated with @PublicMethod
         """
-        return True
-        # FIXME
-        #mod = importlib.import_module('app.map')
-        #funs = getattr(mod, 'functions')
-        #mn = self.unitname + '/' + self.classname + '.' + method
-        #if mn not in funs:
-        #    return False
-        #if 'public' not in funs[mn]:
-        #    return False
-        #return True
+        if '_ispublic' in method.__dict__:
+            return method.__dict__['_ispublic']
+        else:
+            return False
 
-    def invoke(self, method, **kwargs):
+    def invoke(self, methodname, **kwargs):
         """
         Invoke a method in the object
         """
-        if (not core.session.Session.authenticated) and (not self.is_public(method)):
-            raise Exception('Unauthorized access to method \'{0}\' in \'{1}\''.format(method, self.classname))
+        if not hasattr(self.object, methodname):
+            raise Exception('Method \'{0}\' does not exists in \'{1}\''.format(methodname, self.classname))
 
-        method = getattr(self.object, method)
+        method = getattr(self.object, methodname)
+
+        if (not core.session.Session.authenticated) and (not self.is_public(method)):
+            raise Exception('Unauthorized access to method \'{0}\' in \'{1}\''.format(methodname, self.classname))
+        
         return method(**kwargs)
 
     @staticmethod
     def get_units(unittype=''):
+        """
+        Get all units available in symbols
+        """
         if (unittype > '') and (unittype not in _allowed_types):
             raise Exception(label('Invalid unit type \'{0}\''.format(unittype)))
 

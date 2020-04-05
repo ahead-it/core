@@ -1,19 +1,12 @@
 from functools import wraps
 
 
-map = {}
-
-def _add_tomap(func, attribute):
-    fn = func.__module__ + '/' + func.__qualname__
-    if fn not in map:
-        map[fn] = []
-    map[fn].append(attribute)
-
 def PublicMethod(func):
     """
     Define a method callable without authentication 
     """
-    _add_tomap(func, 'public')
+    func.__dict__['_ispublic'] = True
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)

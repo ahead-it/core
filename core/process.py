@@ -17,10 +17,14 @@ class Control:
     Wrapper around pipe to exchange values between child process and parent process.
     This class should be used by *child process*.
     """
-    def __init__(self, pipe: multiprocessing.Pipe):
-        self.pipe = pipe
+    pipe = None
 
-    def send(self, obj):
+    @staticmethod
+    def setpipe(pipe: multiprocessing.Pipe):
+        Control.pipe = pipe
+
+    @staticmethod
+    def send(obj):
         """
         Send an object to parent 
         """
@@ -28,19 +32,20 @@ class Control:
             'message': 'control',
             'value': obj
         }
-        self.pipe.send(msg)
+        Control.pipe.send(msg)
 
-    def recv(self):
+    @staticmethod
+    def recv():
         """
         Receive an object from parent
         """        
-        obj = self.pipe.recv()
+        obj = Control.pipe.recv()
         return obj['value']
 
 
 class ControlProxy:
     """
-    Wrapper around pipe to control parent from child process.
+    Wrapper around pipe used by *parent process*.
     'receive_callback' is called into parent when a message is received from child.
     """
     def __init__(self, receive_callback: Callable[[any], None]):
@@ -85,7 +90,7 @@ def worker_loop(args):
         core.application.Application.load_instance(args['instname'])
 
         pipe = args['pipe']
-        control = Control(pipe)
+        Control.setpipe(pipe)
 
         core.session.Session.connect()
 
@@ -101,10 +106,12 @@ def worker_loop(args):
                         
                         msg = {
                             'message': 'response',
-                            'value': obj['function'](control, *obj['args']),
+                            'value': obj['function'](*obj['args']),
                             'success': True
                         }
-                        pipe.send(msg)
+
+                        core.utility.system.commit()   
+                        pipe.send(msg)                        
                     except:
                         core.application.Application.logexception('prcwrker')
 
@@ -162,7 +169,7 @@ class Worker:
         self.pipe_pair = pipe_pair
         self.pipe = self.pipe_pair[0]
         self.busy = False
-        self.control = None # type: ControlProxy
+        self.ctlproxy = None # type: ControlProxy
 
     def start(self):
         """
@@ -180,8 +187,8 @@ class Worker:
             msg = self.pipe.recv()
 
             if msg['message'] == 'control':
-                if self.control is not None:
-                    self.control.receive_callback(msg['value'])
+                if self.ctlproxy is not None:
+                    self.ctlproxy.receive_callback(msg['value'])
                 continue
 
             break
@@ -242,7 +249,7 @@ class ProcessPool:
         for worker in self.pool:
             worker.pipe.send({'message': 'reload', 'value': modulename})
               
-    async def enqueue(self, control: ControlProxy, function, *args) -> Worker:
+    async def enqueue(self, ctlproxy: ControlProxy, function, *args) -> Worker:
         """
         Enqueue a job in the first process available. If no one available will hold.
         """        
@@ -265,10 +272,10 @@ class ProcessPool:
                         'args': args
                     }
                     worker.busy = True
+                    worker.ctlproxy = ctlproxy
+                    if worker.ctlproxy is not None:
+                        worker.ctlproxy.pipe = worker.pipe
                     worker.pipe.send(msg)
-                    worker.control = control
-                    if worker.control is not None:
-                        worker.control.pipe = worker.pipe
                     found = True
                     break
             
@@ -283,7 +290,7 @@ class ProcessPool:
 
         result = await worker.receive()
         
-        worker.control = None
+        worker.ctlproxy = None
         worker.busy = False
         self.busy_event.set()
 

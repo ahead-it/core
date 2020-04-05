@@ -8,6 +8,7 @@ import tornado.ioloop
 import tornado.log
 import tornado.escape
 import ssl
+import uuid
 import json
 from OpenSSL import crypto
 import core.application
@@ -43,11 +44,12 @@ def _write_accesslog(handler):
         pass
 
 
-def _rpc_dispatcher(control, path, kwargs, token):
+def _rpc_dispatcher(path, kwargs, token):
     """
     Dispatch GET/POST requests in separate process
     """
     core.session.Session.type = 'web'
+    core.session.Session.set_auth_token(token)
 
     parts = path.split('/')
     if len(parts) != 2:
@@ -59,7 +61,6 @@ def _rpc_dispatcher(control, path, kwargs, token):
     proxy = Proxy(classname)
     proxy.create()
     result = proxy.invoke(method, **kwargs)
-    core.utility.system.commit()
     return result
     
 
@@ -67,6 +68,9 @@ class RpcHandler(tornado.web.RequestHandler):
     """
     Serves Core in REST mode
     """
+    def initialize(self):
+        self.ctlproxy = core.process.ControlProxy(self._receive_callback)
+
     async def get(self, path):
         await self._handle('GET', path)
 
@@ -82,6 +86,23 @@ class RpcHandler(tornado.web.RequestHandler):
         self.set_header('Access-Control-Allow-Origin', '*')
         self.set_header('Access-Control-Allow-Headers', 'Content-Type')
         self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')    
+
+    def _receive_callback(self, message):
+        """
+        Receive callback from child process and send to client
+        """
+        try:
+            if message['action'] == 'saveauthtoken':
+                self.set_cookie('core-auth-token', message['token'], expires_days=message['days'])
+
+            elif message['action'] == 'delauthtoken':
+                self.clear_cookie('core-auth-token')
+
+            else:
+                raise Exception(core.language.label('Invalid message \'{0}\' for client'.format(message['action'])))
+
+        except:     
+            core.application.Application.logexception('webservr')
 
     async def _handle(self, method, path):
         """
@@ -104,13 +125,16 @@ class RpcHandler(tornado.web.RequestHandler):
                         kwargs[k] = val
 
             token = WebServer.get_authtoken(self)
+            if not token:
+                self.set_cookie('core-auth-token', str(uuid.uuid4()))
 
             self.set_header("Content-Type", 'application/json')
-
-            result = await core.application.Application.process_pool.enqueue(None, _rpc_dispatcher, 
+            
+            result = await core.application.Application.process_pool.enqueue(self.ctlproxy, _rpc_dispatcher, 
                 path, kwargs, token)
 
-            self.write(json.dumps(result).encode("utf8"))
+            if result is not None:
+                self.write(json.dumps(result).encode("utf8"))
 
         except core.process.RemoteError as ex:
             self._send_error(ex.fmt_exception)
@@ -129,7 +153,7 @@ class RpcHandler(tornado.web.RequestHandler):
         self.set_status(500)
 
 
-def _ws_dispatcher(control, action, session_id, token, message):
+def _ws_dispatcher(action, session_id, token, message):
     """
     Dispatch websocket requests is separate process
     """
@@ -139,8 +163,7 @@ def _ws_dispatcher(control, action, session_id, token, message):
         return core.session.Session.id    
 
     elif action == 'close':
-        core.session.Session.load(session_id)
-        core.session.Session.unregister()    
+        core.session.Session.unregister(session_id)
     
     elif action == 'message':
         core.session.Session.load(session_id)
@@ -154,7 +177,6 @@ def _ws_dispatcher(control, action, session_id, token, message):
                 proxy = core.session.Session.objects[message['objectid']]
 
             result = proxy.invoke(message['method'], **message['arguments'])
-            core.utility.system.commit()
 
         elif message['type'] == 'create':
             proxy = Proxy(message['classname'])
@@ -168,7 +190,6 @@ def _ws_dispatcher(control, action, session_id, token, message):
         else:
             raise Exception(label('Invalid message type'))  
 
-        core.utility.system.commit()
         core.session.Session.register()
         return result
 
@@ -181,20 +202,20 @@ class WsHandler(tornado.websocket.WebSocketHandler):
     Handles websocket
     """
     def initialize(self):
-        self.control = core.process.ControlProxy(self._receive_callback)
+        self.ctlproxy = core.process.ControlProxy(self._receive_callback)
         self.session_id = ''
         self.token = ''
 
-    async def get(self):
-        self.token = self.get_cookie("core-auth-token")
-        if (not self.token) and ('X-Core-AuthToken' in self.request.headers):
-            self.token = self.request.headers['X-Core-AuthToken']
+    def check_origin(self, origin):
+        return True
 
+    async def get(self):
+        self.token = WebServer.get_authtoken(self)
         await super().get()
 
     async def open(self):
         try:
-            self.session_id = await core.application.Application.process_pool.enqueue(self.control, 
+            self.session_id = await core.application.Application.process_pool.enqueue(self.ctlproxy, 
                 _ws_dispatcher, 'open', None, self.token, None)
 
         except core.process.RemoteError as ex:
@@ -204,11 +225,17 @@ class WsHandler(tornado.websocket.WebSocketHandler):
             self._send_error(Convert.formatexception())            
 
     async def on_message(self, message):
+        # Asynchronous on message
+        # https://github.com/tornadoweb/tornado/blob/master/docs/releases/v4.5.0.rst#tornadowebsocket
+        # WebServer._loop.spawn_callback(self._handle_message, message)
+        await self._handle_message(message)
+
+    async def _handle_message(self, message):
         try:
             message = json.loads(message)
 
-            result = await core.application.Application.process_pool.enqueue(self.control, _ws_dispatcher, 'message', 
-                self.session_id, self.token, message)
+            result = await core.application.Application.process_pool.enqueue(self.ctlproxy, 
+                _ws_dispatcher, 'message', self.session_id, self.token, message)
             
             msg = {
                 'type': 'result',
@@ -225,8 +252,8 @@ class WsHandler(tornado.websocket.WebSocketHandler):
     def on_close(self):
         try:
             asyncio.create_task(
-                core.application.Application.process_pool.enqueue(self.control, _ws_dispatcher, 'close', 
-                    self.session_id, self.token, None))
+                core.application.Application.process_pool.enqueue(self.ctlproxy, 
+                    _ws_dispatcher, 'close', self.session_id, self.token, None))
         except:
             pass
 
@@ -246,6 +273,13 @@ class WsHandler(tornado.websocket.WebSocketHandler):
         """
         exc['type'] = 'exception'
         self.write_message(json.dumps(exc))
+
+
+class StaticHandler(tornado.web.StaticFileHandler):
+    async def get(self, path):
+        self.set_header('Access-Control-Allow-Origin', '*')
+        self.set_header('Access-Control-Allow-Methods', 'GET, OPTIONS')   
+        await super().get(path);
 
 
 class WebServer:
@@ -271,7 +305,7 @@ class WebServer:
             dn = core.application.Application.instance['path'] + 'webroot'
             if not os.path.isdir(dn):
                 os.mkdir(dn)
-            paths.append(('/?(.*)', tornado.web.StaticFileHandler, 
+            paths.append(('/?(.*)', StaticHandler, 
                 {
                     'path': dn, 
                     'default_filename': 'index.html'
@@ -365,7 +399,8 @@ class WebServer:
         
     @staticmethod
     def get_authtoken(handler: tornado.web.RequestHandler):
-        token = handler.get_cookie("core-auth-token")
-        if (not token) and ('X-Core-AuthToken' in handler.request.headers):
-            token = handler.request.headers['X-Core-AuthToken']
-        return token
+        if 'X-Core-AuthToken' in handler.request.headers:
+            return handler.request.headers['X-Core-AuthToken']
+
+        return handler.get_cookie("core-auth-token")
+

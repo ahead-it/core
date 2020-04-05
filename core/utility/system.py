@@ -103,3 +103,4 @@ def commit():
     """
     if core.session.Session.database:
         core.session.Session.database.commit()
+

@@ -225,5 +225,6 @@ these severities:
   * `I` Info
   * `D` Debug
 
-## Language reference
-View [Language Reference](reference.md)
+## Additional
+* [Language Reference](doc/reference.md)
+* [Multiprocessing Architecture](doc/multiprocessing.md)

@@ -11,5 +11,7 @@
     "--disable=R",
     "--disable=C",
     "--unsafe-load-any-extension=y"
-  ]  
+  ],
+  "python.linting.pylintEnabled": true,
+  "python.linting.enabled": true
 }

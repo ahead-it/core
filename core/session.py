@@ -19,6 +19,7 @@ class SessionData():
         self.id = str(uuid.uuid4())
         self.type = 'cli' 
         self.user_id = ''
+        self.auth_token = ''
         self.authenticated = False
         self.objects = {} # type: Dict[str, core.object.unit]
 
@@ -37,6 +38,13 @@ class SessionMeta(type):
                 return getattr(self.data, attr)
 
         return super().__getattribute__(attr)
+    
+    def __setattr__(self, attr, value):
+        if attr != 'data':
+            if hasattr(self.data, attr):
+                setattr(self.data, attr, value)
+
+        super().__setattr__(attr, value)
 
     def initialize(self):
         """
@@ -56,11 +64,11 @@ class SessionMeta(type):
         """
         core.application.Application.sessions[self.id] = self.data
 
-    def unregister(self):
+    def unregister(self, sessionid):
         """
         Unregister session data from memory
         """
-        del core.application.Application.sessions[self.id]
+        del core.application.Application.sessions[sessionid]
 
 
 class Session(metaclass=SessionMeta):
@@ -82,9 +90,18 @@ class Session(metaclass=SessionMeta):
     language_code = ''
     id = ''
     type = '' 
+    auth_token = ''
     user_id = ''
     authenticated = False
     objects = {} # type: Dict[str, core.object.unit]
+
+    @staticmethod
+    def set_auth_token(newtoken):
+        try:
+            id = uuid.UUID(newtoken)
+            Session.auth_token = str(id)
+        except:
+            Session.auth_token = ''
         
     @staticmethod
     def connect():

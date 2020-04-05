@@ -20,6 +20,7 @@ from core.object.table import Table
 
 from core.utility.convert import Convert
 from core.utility.system import System, error, commit
+from core.utility.client import Client
 
 from core.object.attributes import PublicMethod
 
