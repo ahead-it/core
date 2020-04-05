@@ -101,7 +101,10 @@ class Application:
                 try:
                     mod = importlib.import_module("app." + app)
                     nfo = getattr(mod, '__appinfo')()
-                    Application.apps[nfo.name] = nfo
+                    if nfo.enabled:
+                        Application.apps[nfo.name] = nfo
+                        Application.log('loadapps', 'I', core.language.label('App \'{0}\' version \'{1}\' loaded'.format(
+                            nfo.display_name, nfo.version)))
                 except:
                     Application.logexception('loadapps')
         

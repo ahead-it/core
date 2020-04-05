@@ -111,7 +111,7 @@ class SqlServer(core.database.server.Server):
             res += 'decimal(38,20)'
             res += ' NOT NULL'  
 
-        elif field.type in [FieldType.DATE]:
+        elif field.type in [FieldType.DATE, FieldType.DATETIME]:
             res += 'datetime'
             res += ' NOT NULL'    
 
@@ -180,7 +180,7 @@ class SqlServer(core.database.server.Server):
                     sql += '\'\''
                 elif field.type in [FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.DECIMAL, FieldType.OPTION]:
                     sql += '0'
-                elif field.type in [FieldType.DATE]:
+                elif field.type in [FieldType.DATE, FieldType.DATETIME]:
                     sql += '\'17530101\''                    
                 self.execute(sql)
 
@@ -251,6 +251,10 @@ class SqlServer(core.database.server.Server):
         if field.type in [FieldType.CODE, FieldType.TEXT, FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.DECIMAL, FieldType.OPTION]:
             res = value
 
+        elif field.type == FieldType.DATETIME:
+            UTC_DELTA = datetime.utcnow() - datetime.now()
+            res = value - UTC_DELTA
+
         elif field.type == FieldType.DATE:
             res = value.date()
 
@@ -263,6 +267,10 @@ class SqlServer(core.database.server.Server):
         res = None
         if field.type in [FieldType.CODE, FieldType.TEXT, FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.DECIMAL, FieldType.OPTION]:
             res = value
+
+        elif field.type == FieldType.DATETIME:
+            UTC_DELTA = datetime.utcnow() - datetime.now()
+            res = value + UTC_DELTA
 
         elif field.type == FieldType.DATE:
             res = datetime.combine(value, time(0, 0, 0))

@@ -125,6 +125,12 @@ def worker_loop(args):
                         except:
                             pass
 
+                    #cleanup
+                    try:
+                        core.session.Session.stop()
+                    except:
+                        pass
+
                 elif obj['message'] == 'reload':
                     Reloader.reload_module(obj['value'])
 

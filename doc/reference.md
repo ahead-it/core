@@ -14,6 +14,7 @@ def __appinfo():
     app.display_name = 'My app'
     app.version = '1.0.19001.0'
     app.author = 'My Dream Team'
+    app.enabled = True
     return app
 ```
 

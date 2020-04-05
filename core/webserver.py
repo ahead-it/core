@@ -44,12 +44,16 @@ def _write_accesslog(handler):
         pass
 
 
-def _rpc_dispatcher(path, kwargs, token):
+def _rpc_dispatcher(path, kwargs, request):
     """
     Dispatch GET/POST requests in separate process
     """
     core.session.Session.type = 'web'
-    core.session.Session.set_auth_token(token)
+    core.session.Session.auth_token = request['token']
+    core.session.Session.address = request['address']
+    if request['locale']:
+        core.session.Session.language_code = request['locale']
+    core.session.Session.start()
 
     parts = path.split('/')
     if len(parts) != 2:
@@ -126,14 +130,26 @@ class RpcHandler(tornado.web.RequestHandler):
 
             token = WebServer.get_authtoken(self)
             if not token:
-                self.set_cookie('core-auth-token', str(uuid.uuid4()))
+                token = str(uuid.uuid4())
+                self.set_cookie('core-auth-token', token)
+            
+            locale = ''
+            if 'Accept-Language' in self.request.headers:
+                locale = self.request.headers['Accept-Language']
+                locale = locale.split(',')[0]
+                locale = locale.replace('-', '_')
 
-            self.set_header("Content-Type", 'application/json')
+            request = {
+                'token': token,
+                'address': self.request.remote_ip,
+                'locale': locale
+            }
             
             result = await core.application.Application.process_pool.enqueue(self.ctlproxy, _rpc_dispatcher, 
-                path, kwargs, token)
+                path, kwargs, request)
 
             if result is not None:
+                self.set_header("Content-Type", 'application/json')
                 self.write(json.dumps(result).encode("utf8"))
 
         except core.process.RemoteError as ex:

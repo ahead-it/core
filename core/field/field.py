@@ -14,6 +14,7 @@ class FieldType(Option):
     BIGINTEGER = 5, label('Big Integer')
     DECIMAL = 6, label('Decimal')
     DATE = 7, label('Date')
+    DATETIME = 8, label('DateTime')
 
 
 class Field():

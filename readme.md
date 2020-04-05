@@ -227,4 +227,5 @@ these severities:
 
 ## Additional
 * [Language Reference](doc/reference.md)
+* [System Objects](doc/sysobjects.md)
 * [Multiprocessing Architecture](doc/multiprocessing.md)

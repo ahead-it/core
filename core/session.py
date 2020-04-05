@@ -8,7 +8,8 @@ import core.application
 import core.object.unit
 import core.database.server
 import core.database.factory
-
+import core.utility.proxy
+import core.utility.system
 
 class SessionData():
     """
@@ -20,6 +21,7 @@ class SessionData():
         self.type = 'cli' 
         self.user_id = ''
         self.auth_token = ''
+        self.address = ''
         self.authenticated = False
         self.objects = {} # type: Dict[str, core.object.unit]
 
@@ -91,17 +93,32 @@ class Session(metaclass=SessionMeta):
     id = ''
     type = '' 
     auth_token = ''
+    address = ''
     user_id = ''
     authenticated = False
     objects = {} # type: Dict[str, core.object.unit]
 
     @staticmethod
-    def set_auth_token(newtoken):
+    def start():
+        """
+        Start session and assert validity of parameters
+        """
         try:
-            id = uuid.UUID(newtoken)
-            Session.auth_token = str(id)
+            uid = uuid.UUID(Session.auth_token)
+            Session.auth_token = str(uid)
         except:
             Session.auth_token = ''
+
+        core.utility.proxy.Proxy.su_invoke('app.codeunit.SessionManagement', 'start')
+        core.utility.system.commit()
+
+    @staticmethod
+    def stop():
+        """
+        Stop session
+        """
+        core.utility.proxy.Proxy.su_invoke('app.codeunit.SessionManagement', 'stop')
+        core.utility.system.commit()
         
     @staticmethod
     def connect():

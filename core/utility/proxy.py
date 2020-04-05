@@ -190,3 +190,30 @@ class Proxy:
                 res.append(obj)
         
         return res
+        
+    @staticmethod
+    def su_create(unitname):
+        """
+        Try create an object for administrative purpose
+        """
+        try:
+            parts = unitname.split('.')
+            mod = importlib.import_module(parts[0] + '.' + parts[1])
+            cla = getattr(mod, parts[2])
+            if issubclass(cla, core.object.unit.Unit):
+                return cla()
+        except:
+            pass
+
+    @staticmethod
+    def su_invoke(obj, methodname, **kwargs):
+        """
+        Try create an object method for administrative purpose
+        """
+        try:
+            if isinstance(obj, str):
+                obj = Proxy.su_create(obj)
+            method = getattr(obj, methodname)
+            return method(**kwargs)
+        except:
+            pass
