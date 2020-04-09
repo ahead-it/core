@@ -155,7 +155,7 @@ To invoke a method:
 ```json
 {
   "type": "invoke",
-  "classname": "app.myapp.codeunit.MathManagement",
+  "classname": "app.codeunit.MathManagement",
   "method": "sum",
   "arguments": {
     "a": 3,
@@ -183,7 +183,7 @@ To create an object and store it in the current session:
 ```json
 {
   "type": "create",
-  "classname": "app.myapp.codeunit.MathManagement"
+  "classname": "app.codeunit.MathManagement"
 }
 ```
 Return value is the ID of the object. To invoke a method

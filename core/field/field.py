@@ -1,4 +1,5 @@
 from typing import List
+import re
 from core.object.option import Option
 from core.language import label
 
@@ -30,6 +31,72 @@ class FieldFilter():
         self.max_value = None
         self.value = None
         self.values = []
+        self.expression = ''
+        self.field = None # type: Field
+
+        self._leftnam = ''
+        self._leftval = None
+        self._pars = []
+
+    def _addpars(self, value):
+        if value.startswith('{') and value.endswith('}'):
+            idx = int(value[1:-1])
+            self._pars.append(self.values[idx])
+
+        else:
+            self._pars.append(self.field.evaluate(value))
+
+    def _replace(self, match):
+        val = match.groups(0)[0]
+        val = val.strip()
+
+        if self._leftval is not None:
+            self._pars.append(self._leftval)
+
+        if '..' in val:
+            bt = val.split('..')
+            if (bt[0] > '') and (bt[1] > ''):
+                self._addpars(bt[0])
+                self._addpars(bt[1])
+                return '(' + self._leftnam + ' BETWEEN ? AND ?)'
+
+            elif bt[0] > '':
+                self._addpars(bt[0])
+                return '(' + self._leftnam + ' >= ?)'
+
+            elif bt[1] > '':
+                self._addpars(bt[1])
+                return '(' + self._leftnam + ' <= ?)'
+        
+        elif val[0:2] in ['<>', '>=', '<=']:
+            self._addpars(val[2:])
+            return '(' + self._leftnam + ' ' + val[0:2] + ' ?)'
+
+        elif val[0:1] in ['<', '>', '=']:
+            self._addpars(val[1:])
+            return '(' + self._leftnam + ' ' + val[0:1] + ' ?)'
+        
+        else:
+            self._addpars(val)
+            return '(' + self._leftnam + ' = ?)'
+
+    def tosql(self, pars, left_name=None, left_value=None):
+        if left_value is not None:
+            self._leftnam = '?'
+            self._leftval = left_value
+        else:
+            self._leftnam = left_name
+            self._leftval = None
+
+        self._pars.clear()
+
+        rgx = re.compile(r'([^()&|]+)')
+        sql = rgx.sub(self._replace, self.expression)
+        sql = sql.replace('|', ' OR ')
+        sql = sql.replace('&', ' AND ')
+
+        pars += self._pars
+        return sql
 
 
 class Field():
@@ -94,6 +161,12 @@ class Field():
         self.value = self.initvalue
         self.xvalue = self.initvalue
 
+    def evaluate(self, strval):
+        """
+        Try to transform string to field value
+        """
+        return strval
+
     def checkvalue(self, value):
         """
         Check or adjust the value according to field type, returns adjusted value
@@ -153,6 +226,8 @@ class Field():
         flt.type = 'expr'
         flt.level = self._getfilterlevel()
         flt.values = values
+        flt.expression = expression
+        flt.field = self
         self.filters.append(flt)
 
     def setrange(self, min=None, max=None):
@@ -172,6 +247,7 @@ class Field():
             flt.type = 'equal'
             flt.level = self._getfilterlevel()
             flt.value = min
+            flt.field = self
             self.filters.append(flt)
 
         else:
@@ -180,4 +256,5 @@ class Field():
             flt.level = self._getfilterlevel()
             flt.min_value = min
             flt.max_value = max
+            flt.field = self
             self.filters.append(flt)

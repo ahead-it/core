@@ -258,7 +258,7 @@ class SqlServer(core.database.server.Server):
             res = True if value == 1 else False
 
         elif field.type == FieldType.DATETIME:
-            if value == date(1753, 1, 1):
+            if value == datetime(1753, 1, 1):
                 res = None
             else:
                 UTC_DELTA = datetime.utcnow() - datetime.now()
@@ -413,6 +413,13 @@ class SqlServer(core.database.server.Server):
                     pars.append(self.to_sqlvalue(field, flt.min_value)) 
                     pars.append(self.to_sqlvalue(field, flt.max_value))
 
+                elif flt.type == 'expr':
+                    vals = []
+                    left_name = '[' + field.sqlname + ']'
+                    where.append('(' + flt.tosql(vals, left_name=left_name) + ')')
+                    for v in vals:
+                        pars.append(self.to_sqlvalue(field, v)) 
+
         return where
 
     def _table_findset(self, table: core.object.table.Table, size, nextset, ascending, pk):
@@ -490,9 +497,24 @@ class SqlServer(core.database.server.Server):
         table._rowversion = row['timestamp']
 
     def table_isempty(self, table: core.object.table.Table):
+        pars = []
         sql = 'SELECT TOP 1 NULL [ne] FROM [' + table._sqlname + ']'  
-        # FIX: add where by filters
-        if not self.query(sql):
+
+        where = self._get_where(table, pars)
+        if where:
+            sql += ' WHERE ' + ' AND '.join(where)
+
+        if not self.query(sql, pars):
             return True
         else:
             return False    
+
+    def table_deleteall(self, table: core.object.table.Table):            
+        pars = []
+        sql = 'DELETE FROM [' + table._sqlname + ']'  
+
+        where = self._get_where(table, pars)
+        if where:
+            sql += ' WHERE ' + ' AND '.join(where)
+
+        self.execute(sql, pars)

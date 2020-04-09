@@ -219,7 +219,16 @@ class Table(Unit):
         """
         Get record by primary key
         """
-        self._dataset = core.session.Session.database.table_get(self, pk)
+        val = []
+        i = 0
+        for f in self._primarykey:
+            if len(pk) > i:
+                val.append(pk[i])
+            else:
+                val.append(f.initvalue)
+            i += 1
+
+        self._dataset = core.session.Session.database.table_get(self, val)
         self._currentrow = -1
         if len(self._dataset) > 0:
             return self.read()
