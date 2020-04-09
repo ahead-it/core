@@ -27,6 +27,7 @@ class Table(Unit):
         self._dataset = None
         self._rowversion = None
         self._sqlname = Convert.to_sqlname(self._name)
+        self._filterlevel = 0
 
         self._fields = [] # type: List[Field]
         for m in self.__dict__:
@@ -139,6 +140,18 @@ class Table(Unit):
 
         core.session.Session.database.table_delete(self)
 
+    def deleteall(self, run_trigger=False):
+        """
+        Delete all record matching the current filter
+        """
+        if run_trigger:
+            if self.findset():
+                while self.read():
+                    self.delete(True)
+
+        else:
+            core.session.Session.database.table_deleteall(self)
+
     def _ondelete(self):
         """
         Event before deletion
@@ -178,6 +191,8 @@ class Table(Unit):
         Remove filter from the table and reset the key to primary key
         """
         self.setcurrentkey()
+        for f in self._fields:
+            f.filters.clear()
 
     def read(self):
         """
@@ -193,6 +208,12 @@ class Table(Unit):
         core.session.Session.database.table_loadrow(self, self._dataset[self._currentrow])
         self._accept_changes()
         return True
+
+    def isempty(self):
+        """
+        Returns true if the table is empty with current filters
+        """
+        return core.session.Session.database.table_isempty(self)
 
     def get(self, *pk):
         """
@@ -226,6 +247,12 @@ class Table(Unit):
             return self.read()
         else:
             return False
+
+    def setfilterlevel(self, level):
+        """
+        Set filter level for new filters added to fields
+        """
+        self._filterlevel = level
         
     def rename(self, *newkey):
         """

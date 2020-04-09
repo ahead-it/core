@@ -121,6 +121,12 @@ always in uppercase
 * `FieldBoolean` true or false value
 * `FieldDecimal` fixed decimal value
 
+### Selecting and modifying records
+FIX
+
+### Filters
+FIX
+
 ### Triggers
 Following triggers are raised:
 * `_oninsert` before a record is inserted in the database
@@ -128,7 +134,7 @@ Following triggers are raised:
 * `_ondelete` before a record is deleted
 * `_onrename` before a record is renamed (change of the primary
 key value)
-* `_onvalidate_[fieldname]` before the validation of specified
+* `_[fieldname]_onvalidate` before the validation of specified
 field
 
 Example:
@@ -142,7 +148,7 @@ class Customer(Table):
     def _oninsert(self):
         self.createdatetme = datetime.now()
 
-    def _onvalidate_postcode(self):
+    def _postcode_onvalidate(self):
         postmgmt = codeunit.PostCodeManagement()
         postmgmt.check(self.postcode.value)
 ```

@@ -59,6 +59,16 @@ class Server():
         Execute a query and returns all rows within a list of dict, key = field name, value = field value
         """
 
+    def table_isempty(self, table: core.object.table.Table):
+        """
+        Returns true if the table is empty with current filters
+        """
+
+    def table_deleteall(self, table: core.object.table.Table):
+        """
+        Delete all record matching the current filter
+        """
+
     def table_compile(self, table: core.object.table.Table):
         """
         Compile a table and its dependencies on database

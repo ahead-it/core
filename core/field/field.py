@@ -1,3 +1,4 @@
+from typing import List
 from core.object.option import Option
 from core.language import label
 
@@ -15,6 +16,20 @@ class FieldType(Option):
     DECIMAL = 6, label('Decimal')
     DATE = 7, label('Date')
     DATETIME = 8, label('DateTime')
+    BOOLEAN = 9, label('Boolean')
+
+
+class FieldFilter():
+    """
+    Filter implementation
+    """
+    def __init__(self):
+        self.level = 0
+        self.type = ''
+        self.min_value = None
+        self.max_value = None
+        self.value = None
+        self.values = []
 
 
 class Field():
@@ -32,6 +47,7 @@ class Field():
         self.value = None
         self.initvalue = None
         self.xvalue = None
+        self.filters = [] # type: List[FieldFilter]
 
     def __setattr__(self, key, value):
         handled = False
@@ -84,18 +100,12 @@ class Field():
         """
         return value
         
-    def convertvalue(self, value):
-        """
-        Convert value in the right type
-        """
-        return value
-
     def validate(self, value):
         """
         Assign value an trigger on validate method
         """
         self.value = value
-        m = '_onvalidate_' + self._codename
+        m = '_' + self._codename + '_onvalidate'
         if self._parent and hasattr(self._parent, m):
             a = getattr(self._parent, m)
             a()
@@ -125,3 +135,49 @@ class Field():
             "when": when,
             "filters": filters
         })
+
+    def _getfilterlevel(self):
+        """
+        Return current filter level of parent table
+        """
+        if (self._parent is not None) and hasattr(self._parent, '_filterlevel'):
+            return self._parent._filterlevel
+        else:
+            return 0
+
+    def setfilter(self, expression, *values):
+        """
+        Add an expression filter
+        """
+        flt = FieldFilter()
+        flt.type = 'expr'
+        flt.level = self._getfilterlevel()
+        flt.values = values
+        self.filters.append(flt)
+
+    def setrange(self, min=None, max=None):
+        """
+        Add or remove a simple filter to the field
+        """
+        if (min is None) and (max is None):
+            fd = []
+            for f in self.filters:
+                if f.level == self._getfilterlevel:
+                    fd.append(f)
+            for f in fd:
+                self.filters.remove(f)
+
+        elif max is None:
+            flt = FieldFilter()
+            flt.type = 'equal'
+            flt.level = self._getfilterlevel()
+            flt.value = min
+            self.filters.append(flt)
+
+        else:
+            flt = FieldFilter()
+            flt.type = 'range'
+            flt.level = self._getfilterlevel()
+            flt.min_value = min
+            flt.max_value = max
+            self.filters.append(flt)

@@ -118,6 +118,9 @@ class SqlServer(core.database.server.Server):
         elif field.type in [FieldType.OPTION]:
             res += 'int NOT NULL'
 
+        elif field.type in [FieldType.BOOLEAN]:
+            res += 'tinyint NOT NULL'
+
         else:
             raise Exception(label('Unknown field type \'{0}\''.format(field.type[1])))
 
@@ -178,7 +181,7 @@ class SqlServer(core.database.server.Server):
                 sql += ' CONSTRAINT [' + field.sqlname + '$DEF] DEFAULT '
                 if field.type in [FieldType.CODE, FieldType.TEXT]:
                     sql += '\'\''
-                elif field.type in [FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.DECIMAL, FieldType.OPTION]:
+                elif field.type in [FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.DECIMAL, FieldType.OPTION, FieldType.BOOLEAN]:
                     sql += '0'
                 elif field.type in [FieldType.DATE, FieldType.DATETIME]:
                     sql += '\'17530101\''                    
@@ -251,12 +254,21 @@ class SqlServer(core.database.server.Server):
         if field.type in [FieldType.CODE, FieldType.TEXT, FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.DECIMAL, FieldType.OPTION]:
             res = value
 
+        elif field.type == FieldType.BOOLEAN:
+            res = True if value == 1 else False
+
         elif field.type == FieldType.DATETIME:
-            UTC_DELTA = datetime.utcnow() - datetime.now()
-            res = value - UTC_DELTA
+            if value == date(1753, 1, 1):
+                res = None
+            else:
+                UTC_DELTA = datetime.utcnow() - datetime.now()
+                res = value - UTC_DELTA
 
         elif field.type == FieldType.DATE:
-            res = value.date()
+            if value == date(1753, 1, 1):
+                res = None
+            else:
+                res = value.date()
 
         else:
             raise Exception(label('Unknown field type \'{0}\''.format(field.type[1])))
@@ -268,12 +280,21 @@ class SqlServer(core.database.server.Server):
         if field.type in [FieldType.CODE, FieldType.TEXT, FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.DECIMAL, FieldType.OPTION]:
             res = value
 
+        elif field.type == FieldType.BOOLEAN:
+            res = 1 if value else 0
+
         elif field.type == FieldType.DATETIME:
-            UTC_DELTA = datetime.utcnow() - datetime.now()
-            res = value + UTC_DELTA
+            if value is None:
+                res = date(1753, 1, 1)
+            else:
+                UTC_DELTA = datetime.utcnow() - datetime.now()
+                res = value + UTC_DELTA
 
         elif field.type == FieldType.DATE:
-            res = datetime.combine(value, time(0, 0, 0))
+            if value is None:
+                res = date(1753, 1, 1)
+            else:
+                res = datetime.combine(value, time(0, 0, 0))
 
         else:
             raise Exception(label('Unknown field type \'{0}\''.format(field.type[1])))
@@ -378,6 +399,22 @@ class SqlServer(core.database.server.Server):
 
         return sql
 
+    def _get_where(self, table: core.object.table.Table, pars):
+        where = []
+
+        for field in table._fields:
+            for flt in field.filters:
+                if flt.type == 'equal':
+                    where.append('([' + field.sqlname + '] = ?)')
+                    pars.append(self.to_sqlvalue(field, flt.value))
+
+                elif flt.type == 'range':
+                    where.append('([' + field.sqlname + '] BETWEEN ? AND ?)')
+                    pars.append(self.to_sqlvalue(field, flt.min_value)) 
+                    pars.append(self.to_sqlvalue(field, flt.max_value))
+
+        return where
+
     def _table_findset(self, table: core.object.table.Table, size, nextset, ascending, pk):
         pars = []
         sql = 'SELECT TOP ' + str(size) + ' '
@@ -394,23 +431,26 @@ class SqlServer(core.database.server.Server):
                 where.append('([' + field.sqlname + '] = ?)')
                 pars.append(self.to_sqlvalue(field, pk[i]))
                 i += 1
-                
-        elif nextset:
-            k = len(table._currentkey)
-            l = k
-            wn = []
-            for i in range(0, k):
-                ws = []
-                for j in range(0, l):
-                    field = table._currentkey[j]
-                    op = ('>' if ascending else '<') if j == (l - 1) else '='
-                    ws.append('([' + field.sqlname + '] ' + op + ' ?)')
-                    pars.append(self.to_sqlvalue(field, field.value))
 
-                wn.append('(' + ' AND '.join(ws) + ')')
-                l -= 1
+        else:
+            if nextset:
+                k = len(table._currentkey)
+                l = k
+                wn = []
+                for i in range(0, k):
+                    ws = []
+                    for j in range(0, l):
+                        field = table._currentkey[j]
+                        op = ('>' if ascending else '<') if j == (l - 1) else '='
+                        ws.append('([' + field.sqlname + '] ' + op + ' ?)')
+                        pars.append(self.to_sqlvalue(field, field.value))
 
-            where.append('(' + ' OR '.join(wn) + ')')
+                    wn.append('(' + ' AND '.join(ws) + ')')
+                    l -= 1
+
+                where.append('(' + ' OR '.join(wn) + ')')
+
+            where += self._get_where(table, pars)
 
         if where:
             sql += ' WHERE ' + ' AND '.join(where)
@@ -448,3 +488,11 @@ class SqlServer(core.database.server.Server):
             field.value = self.from_sqlvalue(field, row[field.sqlname])
         
         table._rowversion = row['timestamp']
+
+    def table_isempty(self, table: core.object.table.Table):
+        sql = 'SELECT TOP 1 NULL [ne] FROM [' + table._sqlname + ']'  
+        # FIX: add where by filters
+        if not self.query(sql):
+            return True
+        else:
+            return False    

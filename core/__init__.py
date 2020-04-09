@@ -1,4 +1,4 @@
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 
 from core.application import Application
 from core.app import App, AppInfo
@@ -17,6 +17,7 @@ from core.field.text import FieldText
 from core.field.decimal import FieldDecimal
 from core.field.date import FieldDate
 from core.field.datetime import FieldDateTime
+from core.field.boolean import FieldBoolean
 from core.object.table import Table
 
 from core.utility.convert import Convert

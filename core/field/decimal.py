@@ -18,9 +18,6 @@ class FieldDecimal(Field):
         self.xvalue = self.value
 
     def checkvalue(self, value):
-        return self.convertvalue(value)
-    
-    def convertvalue(self, value):
         if isinstance(value, float):
             return Decimal(str(value))
         else:
