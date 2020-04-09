@@ -91,7 +91,7 @@ class MathManagement(Codeunit):
 ```
 
 ## Table
-[Table reference](doc/table.md)
+[Table reference](table.md)
 
 ## Access control
 ### Public method
