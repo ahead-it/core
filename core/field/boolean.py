@@ -3,7 +3,7 @@ from core.field.field import Field, FieldType
 from core.language import label
 
 
-class FieldBoolean(Field):
+class Boolean(Field):
     """
     Field of type BOOLEAN
     """    

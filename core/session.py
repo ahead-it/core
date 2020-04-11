@@ -66,11 +66,11 @@ class SessionMeta(type):
         """
         core.application.Application.sessions[self.id] = self.data
 
-    def unregister(self, sessionid):
+    def unregister(self):
         """
         Unregister session data from memory
         """
-        del core.application.Application.sessions[sessionid]
+        del core.application.Application.sessions[self.id]
 
 
 class Session(metaclass=SessionMeta):

@@ -1,9 +1,9 @@
-from decimal import Decimal
+import decimal
 from core.utility.convert import Convert
 from core.field.field import Field, FieldType
 
 
-class FieldDecimal(Field):
+class Decimal(Field):
     """
     Field of type DECIMAL
     """    
@@ -13,12 +13,12 @@ class FieldDecimal(Field):
         self.name = name
         self.caption = caption
         self.sqlname = Convert.to_sqlname(name)
-        self.value = Decimal(0)
+        self.value = decimal.Decimal(0)
         self.initvalue = self.value
         self.xvalue = self.value
 
     def checkvalue(self, value):
         if isinstance(value, float):
-            return Decimal(str(value))
+            return decimal.Decimal(str(value))
         else:
-            return Decimal(value)        
+            return decimal.Decimal(value)        

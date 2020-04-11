@@ -2,7 +2,7 @@ from core.utility.convert import Convert
 from core.field.field import Field, FieldType
 
 
-class FieldBigInteger(Field):
+class BigInteger(Field):
     """
     Field of type BIGINTEGER
     """    

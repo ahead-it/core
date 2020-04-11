@@ -10,24 +10,24 @@ class Customer(Table):
         self._name = 'Customer'
         self._caption = label('Customer')
         
-        self.no = FieldCode('No.', label('No.'), 20)
-        self.name = FieldText('Name', label('Name'), 50)
+        self.no = field.Code('No.', label('No.'), 20)
+        self.name = field.Text('Name', label('Name'), 50)
 
         self._setprimarykey(self.no)
 ```
 ## Fields
 These field types are defined:
-* `FieldCode` string value, without leading and trailing spaces,
+* `Code` string value, without leading and trailing spaces,
 always in uppercase
-* `FieldText` string value
-* `FieldInteger` integer value
-* `FieldBigInteger` big integer value
-* `FieldOption` value related to Option class
-* `FieldDate` value representing a date
-* `FieldTime` value representing a time
-* `FieldDateTime` value representing a date/time
-* `FieldBoolean` true or false value
-* `FieldDecimal` fixed decimal value
+* `Text` string value
+* `Integer` integer value
+* `BigInteger` big integer value
+* `Option` value related to Option class
+* `Date` value representing a date
+* `Time` value representing a time
+* `DateTime` value representing a date/time
+* `Boolean` true or false value
+* `Decimal` fixed decimal value
 
 ## Selecting and modifying records
 To insert a new record:
@@ -104,7 +104,7 @@ Example:
 class Customer(Table):
     def _init(self):
         ...
-        self.postcode = FieldCode('Post Code', label('Post code'), 10)
+        self.postcode = field.Code('Post Code', label('Post code'), 10)
         ...
         
     def _oninsert(self):
@@ -116,8 +116,8 @@ class Customer(Table):
 ```
 
 # Fields
-## FieldOption
-Here's the syntax to define a FieldOption:
+## Option
+Here's the syntax to define a `field.Option`:
 
 ```python
 class SalesHeaderType(Option):
@@ -131,6 +131,6 @@ class SalesHeaderType(Option):
 class SalesHeader(Table):
     def _init(self):
         ...
-        self.documenttype = FieldOption('Document Type', label('Document type'), SalesHeaderType)
+        self.documenttype = field.Option('Document Type', label('Document type'), SalesHeaderType)
         ...
 ```

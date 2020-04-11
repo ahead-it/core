@@ -4,7 +4,7 @@ from core.utility.system import error
 from core.language import label
 
 
-class FieldText(Field):
+class Text(Field):
     """
     Field of type TEXT
     """    

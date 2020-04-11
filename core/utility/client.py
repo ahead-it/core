@@ -1,7 +1,6 @@
 import core.session
 import core.process
 from core.language import label
-import uuid
 
 
 class ClientNotSupportedException(Exception):
@@ -19,7 +18,10 @@ class Client():
 
     @staticmethod
     def save_auth_token(daysvalid):
-        if core.session.Session.type not in ['web', 'socket']:
+        """
+        Tells client to save authentication token
+        """
+        if core.session.Session.type not in ['web']:
             raise ClientNotSupportedException()
 
         msg = {
@@ -32,7 +34,10 @@ class Client():
 
     @staticmethod
     def destroy_auth_token():
-        if core.session.Session.type not in ['web', 'socket']:
+        """
+        Tells client to destroy authentication token
+        """
+        if core.session.Session.type not in ['web']:
             raise ClientNotSupportedException()
 
         msg = {
@@ -40,3 +45,42 @@ class Client():
         }
 
         core.process.Control.send(msg)
+
+    @staticmethod
+    def sendrcv(message):
+        """
+        Send a message to client and wait for response
+        """        
+        if core.session.Session.type not in ['socket']:
+            raise ClientNotSupportedException()
+
+        msg = {
+            'action': 'send',
+            'message': message
+        }
+
+        core.process.Control.send(msg)
+
+        obj = core.process.Control.recv()
+        return obj
+
+    @staticmethod
+    def message(message, title=None):
+        msg = {
+            'type': 'message',
+            'message': message,
+            'title': title
+        }
+
+        Client.sendrcv(msg)
+
+    @staticmethod
+    def confirm(message, default=False, title=None):
+        msg = {
+            'type': 'confirm',
+            'message': message,
+            'default': default,
+            'title': title
+        }
+
+        res = Client.sendrcv(msg)        

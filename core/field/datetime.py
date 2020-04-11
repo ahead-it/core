@@ -5,7 +5,7 @@ from core.utility.system import error
 from core.language import label
 
 
-class FieldDateTime(Field):
+class DateTime(Field):
     """
     Field of type DATETIME
     """    

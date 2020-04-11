@@ -1,11 +1,11 @@
 from core.utility.convert import Convert
 from core.field.field import Field, FieldType
-from core.object.option import Option
 from core.utility.system import error
 from core.language import label
+import core.object.option
 
 
-class FieldOption(Field):
+class Option(Field):
     """
     Field of type OPTION
     """    
@@ -17,7 +17,7 @@ class FieldOption(Field):
         self.caption = caption
         self.sqlname = Convert.to_sqlname(self.name)
 
-        if not issubclass(optclass, Option):
+        if not issubclass(optclass, core.object.option.Option):
             error(label('Invalid option class \'{0}\''.format(optclass)))
 
         opts = optclass.options()

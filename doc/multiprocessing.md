@@ -35,3 +35,34 @@ represents a callback for the parent.
 * `receive` that receive a message from parent sent by `ControlProxy.send`
 
 ![](img/proxy.png)
+
+## Session lifecycle
+After `ProcessPool` creates a new child, `Application` is initialized and all apps are loaded. If instance has a database a new connection is made.
+
+At the beginning of the message loop `Session` is initialized; at the end database transaction is comitted.
+
+![](img/session.png)
+
+## RPC request lifecycle
+After a new RPC request arrives, a new `Session` is started passing to it an authentication token if available.
+
+Authentication token can arrives via HTTP cookie `core-auth-token` or via HTTP header `X-Core-AuthToken`.
+
+Start of `Session` calls if available the method  `start` of special object `app.codeunit.SessionManagement`.
+
+After the handling of the request, `Session` is stopped and  if available the method  `stop` of special object `app.codeunit.SessionManagement` is called.
+
+![](img/rpclife.png)
+
+## Websocket request lifecycle
+When a new websocket is opened `Session` is started and registered in a multiprocess shared memory area because will be served by any available process in the pool.
+
+![](img/wsopen.png)
+
+When a new message arrives from websocket `Session` state is loaded from shared memory. If the request is handled successful, `Session` state is updated in shared memory for future requests.
+
+![](img/wsmessage.png)
+
+When the websocket is closed `Session` is stopped and its state unregistered from shared memory.
+
+![](img/wsclose.png)

@@ -114,30 +114,37 @@ class Proxy:
     """
     Dynamically load and handles unit
     """
-    def __init__(self, unitname):
-        parts = unitname.split('.')
-        if (len(parts) != 3) or \
-            (parts[0] != 'app') or \
-            (parts[1] not in _allowed_types):
-            raise InvalidUnitException(unitname)
+    def __init__(self, unitname=None, obj=None):
+        if unitname is not None:
+            parts = unitname.split('.')
+            if (len(parts) != 3) or \
+                (parts[0] != 'app') or \
+                (parts[1] not in _allowed_types):
+                raise InvalidUnitException(unitname)
 
-        mod = importlib.import_module(parts[0] + '.' + parts[1])
-        if not hasattr(mod, parts[2]):
-            raise InvalidUnitException(unitname)
+            mod = importlib.import_module(parts[0] + '.' + parts[1])
+            if not hasattr(mod, parts[2]):
+                raise InvalidUnitException(unitname)
 
-        self.object_class = getattr(mod, parts[2])
-        if not issubclass(self.object_class, core.object.unit.Unit):
-            raise InvalidUnitException(unitname)
+            self.object_class = getattr(mod, parts[2])
+            if not issubclass(self.object_class, core.object.unit.Unit):
+                raise InvalidUnitException(unitname)
 
-        self.object = None # type: core.object.unit.Unit
-        self.unitname = parts[0] + '.' + parts[1]
-        self.classname = parts[2]
+            self.unitname = parts[0] + '.' + parts[1]
+            self.classname = parts[2]
+
+        else:
+            self.unitname = ''
+            self.classname = ''
+
+        self.object = obj # type: core.object.unit.Unit        
 
     def create(self):
         """
         Create the object
         """
         self.object = self.object_class()
+        return self.object
 
     def is_public(self, method):
         """

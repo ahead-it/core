@@ -5,7 +5,7 @@ from core.utility.system import error
 from core.language import label
 
 
-class FieldDate(Field):
+class Date(Field):
     """
     Field of type DATE
     """    

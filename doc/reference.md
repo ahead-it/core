@@ -93,6 +93,9 @@ class MathManagement(Codeunit):
 ## Table
 [Table reference](table.md)
 
+## Page
+[Page reference](page.md)
+
 ## Access control
 ### Public method
 Public methods are served without authentication and are

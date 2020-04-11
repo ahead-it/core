@@ -10,6 +10,7 @@
   "python.linting.pylintArgs": [
     "--disable=R",
     "--disable=C",
+    "--disable=attribute-defined-outside-init",
     "--unsafe-load-any-extension=y"
   ],
   "python.linting.pylintEnabled": true,

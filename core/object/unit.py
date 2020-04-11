@@ -2,6 +2,7 @@ import importlib
 import uuid
 from core.object.option import Option
 from core.language import label
+import core.session
 
 
 class UnitType(Option):
@@ -75,6 +76,19 @@ class Unit:
                 state[keys[i]][m] = attr
 
         return (Unit._restore, (state, ))
+
+    def _register(self):
+        """
+        Register itself in session state
+        """
+        core.session.Session.objects[self._id] = self
+
+    def _unregister(self):
+        """
+        Unregister itself from session state
+        """
+        if self._id in core.session.Session.objects:
+            del core.session.Session.objects[self._id]
 
     @staticmethod
     def _restore(args):

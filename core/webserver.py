@@ -55,17 +55,21 @@ def _rpc_dispatcher(path, kwargs, request):
         core.session.Session.language_code = request['locale']
     core.session.Session.start()
 
-    parts = path.split('/')
-    if len(parts) != 2:
-        raise Exception('Invalid request \'{0}\''.format(path))
+    try:
+        parts = path.split('/')
+        if len(parts) != 2:
+            raise Exception('Invalid request \'{0}\''.format(path))
 
-    classname = 'app.codeunit.' + parts[0]
-    method = parts[1]
+        classname = 'app.codeunit.' + parts[0]
+        method = parts[1]
 
-    proxy = Proxy(classname)
-    proxy.create()
-    result = proxy.invoke(method, **kwargs)
-    return result
+        proxy = Proxy(classname)
+        proxy.create()
+        result = proxy.invoke(method, **kwargs)
+        return result
+
+    finally:
+        core.session.Session.stop()
     
 
 class RpcHandler(tornado.web.RequestHandler):
@@ -128,22 +132,8 @@ class RpcHandler(tornado.web.RequestHandler):
                     except:
                         kwargs[k] = val
 
-            token = WebServer.get_authtoken(self)
-            if not token:
-                token = str(uuid.uuid4())
-                self.set_cookie('core-auth-token', token)
-            
-            locale = ''
-            if 'Accept-Language' in self.request.headers:
-                locale = self.request.headers['Accept-Language']
-                locale = locale.split(',')[0]
-                locale = locale.replace('-', '_')
-
-            request = {
-                'token': token,
-                'address': self.request.remote_ip,
-                'locale': locale
-            }
+            request = WebServer.get_request(self)
+            self.set_cookie('core-auth-token', request['token'])
             
             result = await core.application.Application.process_pool.enqueue(self.ctlproxy, _rpc_dispatcher, 
                 path, kwargs, request)
@@ -169,48 +159,59 @@ class RpcHandler(tornado.web.RequestHandler):
         self.set_status(500)
 
 
-def _ws_dispatcher(action, session_id, token, message):
+def _ws_dispatch_open(request):
     """
-    Dispatch websocket requests is separate process
+    Handles opening of websocket
     """
-    if action == 'open':
-        core.session.Session.type = 'socket'
-        core.session.Session.register()
-        return core.session.Session.id    
+    core.session.Session.type = 'socket'
+    core.session.Session.auth_token = request['token']
+    core.session.Session.address = request['address']
+    if request['locale']:
+        core.session.Session.language_code = request['locale']
+    core.session.Session.start()
+    core.session.Session.register()
+    return core.session.Session.id    
 
-    elif action == 'close':
-        core.session.Session.unregister(session_id)
-    
-    elif action == 'message':
-        core.session.Session.load(session_id)
-        result = None
 
-        if message['type'] == 'invoke':
-            if 'classname' in message:
-                proxy = Proxy(message['classname'])
-                proxy.create()
-            else:
-                proxy = core.session.Session.objects[message['objectid']]
+def _ws_dispatch_close(session_id):
+    """
+    Handles closing of websocket
+    """
+    core.session.Session.load(session_id)
+    core.session.Session.stop()
+    core.session.Session.unregister()
 
-            result = proxy.invoke(message['method'], **message['arguments'])
 
-        elif message['type'] == 'create':
+def _ws_dispatch_message(session_id, message):
+    """
+    Dispatch new message coming from websocket
+    """
+    core.session.Session.load(session_id)
+    result = None
+
+    if message['type'] == 'invoke':
+        if 'classname' in message:
             proxy = Proxy(message['classname'])
-            proxy.create()  
-            core.session.Session.objects[proxy.object._id] = proxy
-            result = proxy.object._id
-
-        elif message['type'] == 'destroy':
-            del core.session.Session.objects[message['objectid']]
-
+            proxy.create()
         else:
-            raise Exception(label('Invalid message type'))  
+            proxy = Proxy(obj=core.session.Session.objects[message['objectid']])
 
-        core.session.Session.register()
-        return result
+        result = proxy.invoke(message['method'], **message['arguments'])
+
+    elif message['type'] == 'create':
+        proxy = Proxy(message['classname'])
+        obj = proxy.create()  
+        obj._register()
+        result = obj._id
+
+    elif message['type'] == 'destroy':
+        del core.session.Session.objects[message['objectid']]
 
     else:
-        raise Exception(label('Invalid request'))
+        raise Exception(label('Invalid message type'))  
+
+    core.session.Session.register()
+    return result
 
 
 class WsHandler(tornado.websocket.WebSocketHandler):
@@ -220,7 +221,6 @@ class WsHandler(tornado.websocket.WebSocketHandler):
     def initialize(self):
         self.ctlproxy = core.process.ControlProxy(self._receive_callback)
         self.session_id = ''
-        self.token = ''
 
     def check_origin(self, origin):
         return True
@@ -231,8 +231,9 @@ class WsHandler(tornado.websocket.WebSocketHandler):
 
     async def open(self):
         try:
-            self.session_id = await core.application.Application.process_pool.enqueue(self.ctlproxy, 
-                _ws_dispatcher, 'open', None, self.token, None)
+            request = WebServer.get_request(self)
+            self.session_id = await core.application.Application.process_pool.enqueue(None, 
+                _ws_dispatch_open, request)
 
         except core.process.RemoteError as ex:
             self._send_error(ex.fmt_exception)
@@ -251,7 +252,7 @@ class WsHandler(tornado.websocket.WebSocketHandler):
             message = json.loads(message)
 
             result = await core.application.Application.process_pool.enqueue(self.ctlproxy, 
-                _ws_dispatcher, 'message', self.session_id, self.token, message)
+                _ws_dispatch_message, self.session_id, message)
             
             msg = {
                 'type': 'result',
@@ -268,20 +269,26 @@ class WsHandler(tornado.websocket.WebSocketHandler):
     def on_close(self):
         try:
             asyncio.create_task(
-                core.application.Application.process_pool.enqueue(self.ctlproxy, 
-                    _ws_dispatcher, 'close', self.session_id, self.token, None))
+                core.application.Application.process_pool.enqueue(None, 
+                    _ws_dispatch_close, self.session_id))
         except:
             pass
+
 
     def _receive_callback(self, message):
         """
         Receive callback from child process and send to websocket
         """
-        msg = {
-            'type': 'message',
-            'value': message
-        }
-        self.write_message(json.dumps(message))
+        try:
+            if message['action'] == 'send':
+                self.write_message(json.dumps(message['message']))
+
+            else:
+                raise Exception(core.language.label('Invalid message \'{0}\' for client'.format(message['action'])))
+
+        except:     
+            core.application.Application.logexception('webservr')
+
 
     def _send_error(self, exc):
         """
@@ -420,3 +427,22 @@ class WebServer:
 
         return handler.get_cookie("core-auth-token")
 
+    @staticmethod
+    def get_request(handler: tornado.web.RequestHandler):
+        token = WebServer.get_authtoken(handler)
+        if not token:
+            token = str(uuid.uuid4())
+        
+        locale = ''
+        if 'Accept-Language' in handler.request.headers:
+            locale = handler.request.headers['Accept-Language']
+            locale = locale.split(',')[0]
+            locale = locale.replace('-', '_')
+
+        request = {
+            'token': token,
+            'address': handler.request.remote_ip,
+            'locale': locale
+        }
+
+        return request

@@ -2,7 +2,7 @@ from core.utility.convert import Convert
 from core.field.field import Field, FieldType
 
 
-class FieldInteger(Field):
+class Integer(Field):
     """
     Field of type INTEGER
     """    
