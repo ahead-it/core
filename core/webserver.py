@@ -100,14 +100,16 @@ class RpcHandler(tornado.web.RequestHandler):
         Receive callback from child process and send to client
         """
         try:
-            if message['action'] == 'saveauthtoken':
-                self.set_cookie('core-auth-token', message['token'], expires_days=message['days'])
+            result = message['value']
 
-            elif message['action'] == 'delauthtoken':
+            if result['action'] == 'saveauthtoken':
+                self.set_cookie('core-auth-token', result['token'], expires_days=result['days'])
+
+            elif result['action'] == 'delauthtoken':
                 self.clear_cookie('core-auth-token')
 
             else:
-                raise Exception(core.language.label('Invalid message \'{0}\' for client'.format(message['action'])))
+                raise Exception(core.language.label('Invalid message \'{0}\' for client'.format(result['action'])))
 
         except:     
             core.application.Application.logexception('webservr')
@@ -138,9 +140,9 @@ class RpcHandler(tornado.web.RequestHandler):
             result = await core.application.Application.process_pool.enqueue(self.ctlproxy, _rpc_dispatcher, 
                 path, kwargs, request)
 
-            if result is not None:
+            if result['value'] is not None:
                 self.set_header("Content-Type", 'application/json')
-                self.write(json.dumps(result).encode("utf8"))
+                self.write(json.dumps(result['value']).encode("utf8"))
 
         except core.process.RemoteError as ex:
             self._send_error(ex.fmt_exception)
@@ -232,8 +234,8 @@ class WsHandler(tornado.websocket.WebSocketHandler):
     async def open(self):
         try:
             request = WebServer.get_request(self)
-            self.session_id = await core.application.Application.process_pool.enqueue(None, 
-                _ws_dispatch_open, request)
+            result = await core.application.Application.process_pool.enqueue(None, _ws_dispatch_open, request)
+            self.session_id = result['value']
 
         except core.process.RemoteError as ex:
             self._send_error(ex.fmt_exception)
@@ -251,12 +253,15 @@ class WsHandler(tornado.websocket.WebSocketHandler):
         try:
             message = json.loads(message)
 
-            result = await core.application.Application.process_pool.enqueue(self.ctlproxy, 
-                _ws_dispatch_message, self.session_id, message)
+            if message['type'] == 'answer':
+                result = await core.application.Application.process_pool.sendback(self.ctlproxy.id, message)
+            else:
+                result = await core.application.Application.process_pool.enqueue(self.ctlproxy, 
+                    _ws_dispatch_message, self.session_id, message)
             
             msg = {
-                'type': 'result',
-                'value': result
+                'type': result['type'],
+                'value': result['value']
             }
             self.write_message(json.dumps(msg))
 
@@ -267,6 +272,16 @@ class WsHandler(tornado.websocket.WebSocketHandler):
             self._send_error(Convert.formatexception())          
         
     def on_close(self):
+        try:
+            msg = {
+                'type': 'error',
+                'value': label('Client disconnected')
+            }
+            asyncio.create_task(
+                core.application.Application.process_pool.sendback(self.ctlproxy.id, msg))
+        except:
+            pass            
+
         try:
             asyncio.create_task(
                 core.application.Application.process_pool.enqueue(None, 
@@ -280,11 +295,15 @@ class WsHandler(tornado.websocket.WebSocketHandler):
         Receive callback from child process and send to websocket
         """
         try:
-            if message['action'] == 'send':
-                self.write_message(json.dumps(message['message']))
+            if message['type'] in ['send', 'sendrcv']:
+                msg = {
+                    'type': message['type'],
+                    'value': message['value']
+                }                
+                self.write_message(json.dumps(msg))
 
             else:
-                raise Exception(core.language.label('Invalid message \'{0}\' for client'.format(message['action'])))
+                raise Exception(core.language.label('Invalid message \'{0}\' for client'.format(message['type'])))
 
         except:     
             core.application.Application.logexception('webservr')
@@ -365,10 +384,16 @@ class WebServer:
 
             tornado.ioloop.PeriodicCallback(WebServer._check, 2000).start() 
             WebServer._loop = tornado.ioloop.IOLoop.current()
+            asyncio.get_event_loop().set_exception_handler(WebServer._onloopexception)
             WebServer._loop.start()   
 
         except:     
             core.application.Application.logexception('webservr')
+
+    @staticmethod
+    def _onloopexception(loop, context):
+        exc = context.get("exception", context["message"])
+        core.application.Application.log('webservr', 'W', str(exc))
 
     @staticmethod
     def stop():

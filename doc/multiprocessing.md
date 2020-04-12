@@ -20,8 +20,7 @@ Each worker wait for a message coming on his pipe:
 pipe as `response` message
 * `reload` tells `import` module to reload a specific file due changes
 
-`enqueue` waits for `response` message or for the special `control` message that 
-represents a callback for the parent.
+`enqueue` waits for `response` message and returns. Special type `send` of `response` raises a callback into the parent.
 
 ![](img/worker.png)
 
@@ -31,8 +30,8 @@ represents a callback for the parent.
 * `send` that allows parent to send a message to child
 
 `Control` static class is created by child and has two members:
-* `send` that send a message to parent invoking `ControlProxy.receive_callback`
-* `receive` that receive a message from parent sent by `ControlProxy.send`
+* `send` that send a message to parent 
+* `sendrcv` that send a message to parent and wait for an answer
 
 ![](img/proxy.png)
 
