@@ -155,7 +155,7 @@ class Proxy:
         else:
             return False
 
-    def invoke(self, methodname, **kwargs):
+    def invoke(self, methodname, *args, **kwargs):
         """
         Invoke a method in the object
         """
@@ -167,7 +167,7 @@ class Proxy:
         if (not core.session.Session.authenticated) and (not self.is_public(method)):
             raise Exception('Unauthorized access to method \'{0}\' in \'{1}\''.format(methodname, self.classname))
         
-        return method(**kwargs)
+        return method(*args, **kwargs)
 
     @staticmethod
     def get_units(unittype=''):
@@ -213,7 +213,7 @@ class Proxy:
             pass
 
     @staticmethod
-    def su_invoke(obj, methodname, **kwargs):
+    def su_invoke(obj, methodname, *args, **kwargs):
         """
         Try create an object method for administrative purpose
         """
@@ -221,6 +221,6 @@ class Proxy:
             if isinstance(obj, str):
                 obj = Proxy.su_create(obj)
             method = getattr(obj, methodname)
-            return method(**kwargs)
+            return method(*args, **kwargs)
         except:
             pass

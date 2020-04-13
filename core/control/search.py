@@ -11,4 +11,4 @@ class Search(Control):
         """
         Handles search by the user
         """
-        return self._page._pageinvoke('_' + self._codename + '_search', **{'what': what})
+        return self._page._pageinvoke('_' + self._codename + '_search', what)

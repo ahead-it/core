@@ -27,24 +27,24 @@ class Client():
         core.process.Control.send(message)
 
     @staticmethod
-    def sendrcv(message):
+    def sendrecv(message):
         """
         Send a message to client and wait for response
         """        
         if core.session.Session.type not in ['socket']:
             raise ClientNotSupportedException()
 
-        return core.process.Control.sendrcv(message)
+        return core.process.Control.sendrecv(message)
 
     @staticmethod
-    def save_auth_token(daysvalid):
+    def save_auth_token(expireat):
         """
         Tells client to save authentication token
         """
         msg = {
             'action': 'saveauthtoken',
             'token': core.session.Session.auth_token,
-            'days': daysvalid
+            'expireat': expireat
         }
 
         Client.send(msg)
@@ -79,4 +79,4 @@ class Client():
             'title': title
         }
 
-        return Client.sendrcv(msg)        
+        return Client.sendrecv(msg)        

@@ -4,7 +4,7 @@ import importlib
 import inspect
 from typing import Dict
 import json
-from core.session import Session, SessionData
+from core.session import Session
 from core.app import AppInfo
 import core
 import core.language
@@ -16,8 +16,7 @@ import core.process
 
 class Application:
     """
-    Defines an application server on some host
-    It contans sessions and apps
+    Defines an application server on some host that contains apps
     """
     _cli_loglevel = []
     _log_lock = multiprocessing.Lock()
@@ -26,9 +25,7 @@ class Application:
     apps = {} # type: Dict[str, AppInfo]
     instance = {} # type: dict
     process_pool = None # type: core.process.ProcessPool
-    process_manager = None # type: multiprocessing.Manager
-    sessions = {} # type: Dict[str, SessionData]
-    
+        
     @staticmethod
     def initialize():
         """
@@ -76,6 +73,7 @@ class Application:
             Application._assert_default(opts, 'webserver_enabled', False)
             Application._assert_default(opts, 'webserver_port', 8080)
             Application._assert_default(opts, 'webserver_secure', False)
+            Application._assert_default(opts, 'min_processes', 2)            
             Application._assert_default(opts, 'max_processes', 32)
 
             Application.instance = opts
@@ -140,7 +138,7 @@ class Application:
 
         Application._log_lock.acquire()
         try:
-            if (Session.type == 'cli') and (severity in Application._cli_loglevel):
+            if severity in Application._cli_loglevel:
                 print(line)
 
             dn = 'application'
@@ -202,10 +200,7 @@ class Application:
         Start servers and process pools
         """
         try:
-            Application.process_manager = multiprocessing.Manager()
-            Application.sessions = Application.process_manager.dict()
-        
-            Application.process_pool = core.process.ProcessPool(Application.instance['max_processes'])
+            Application.process_pool = core.process.ProcessPool(Application.instance['min_processes'], Application.instance['max_processes'])
             Application.process_pool.start()
 
             core.utility.proxy.Reloader.start()
@@ -229,13 +224,7 @@ class Application:
             if Application.process_pool:
                 Application.process_pool.stop()
                 Application.process_pool = None
-
-            Application.sessions = {}
-
-            if Application.process_manager:
-                Application.process_manager.shutdown()
-                Application.process_manager = None
-                
+               
         except:
             Application.logexception('strtsrvr')
      

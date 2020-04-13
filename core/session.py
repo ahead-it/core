@@ -54,24 +54,6 @@ class SessionMeta(type):
         """
         self.data = SessionData()
 
-    def load(self, sessionid):
-        """
-        Load session from memory
-        """
-        self.data = core.application.Application.sessions[sessionid]
-
-    def register(self):
-        """
-        Register session data in memory
-        """
-        core.application.Application.sessions[self.id] = self.data
-
-    def unregister(self):
-        """
-        Unregister session data from memory
-        """
-        del core.application.Application.sessions[self.id]
-
 
 class Session(metaclass=SessionMeta):
     """

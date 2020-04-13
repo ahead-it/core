@@ -77,19 +77,6 @@ class Unit:
 
         return (Unit._restore, (state, ))
 
-    def _register(self):
-        """
-        Register itself in session state
-        """
-        core.session.Session.objects[self._id] = self
-
-    def _unregister(self):
-        """
-        Unregister itself from session state
-        """
-        if self._id in core.session.Session.objects:
-            del core.session.Session.objects[self._id]
-
     @staticmethod
     def _restore(args):
         """
@@ -103,4 +90,19 @@ class Unit:
         for k in args['instance']:
             setattr(obj, k, args['instance'][k])    
         return obj
+
+    def _register(self):
+        """
+        Register itself in session state
+        """
+        core.session.Session.objects[self._id] = self
+
+    def _unregister(self):
+        """
+        Unregister itself from session state
+        """
+        if self._id in core.session.Session.objects:
+            del core.session.Session.objects[self._id]
+
+
                 

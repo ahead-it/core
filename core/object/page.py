@@ -28,7 +28,9 @@ class Page(Unit):
         Render a page into the client
         """
         self._register()
-        Client.send(self._render())
+        obj = self._render()
+        obj['action'] = 'page'
+        Client.send(obj)
 
     def _render(self):
         """
@@ -46,18 +48,18 @@ class Page(Unit):
 
         return page
 
-    def _ctlinvoke(self, controlid, method, **kwargs):
+    def _ctlinvoke(self, controlid, method, *args, **kwargs):
         """
         Invoke method of a control
         """
         ctl = self._allcontrols[controlid]
         fun = getattr(ctl, method)
-        return fun(**kwargs)
+        return fun(*args, **kwargs)
     
-    def _pageinvoke(self, method, **kwargs):
+    def _pageinvoke(self, method, *args, **kwargs):
         """
         Invoke method of page
         """
         if hasattr(self, method):
             fun = getattr(self, method)
-            return fun(**kwargs)
+            return fun(*args, **kwargs)

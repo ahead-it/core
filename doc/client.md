@@ -78,6 +78,7 @@ Websocket Server > Client
 {
   "type": "send",
   "value": {
+    "action": "page",    
     "id": "8912eecc-aea2-4c6f-a634-c21b87c77117",
     "name": "Welcome",
     "caption": "Welcome Page",
@@ -253,12 +254,12 @@ Websocket Server > Client
 }
 ```
 
-`sendrcv` represents an action that must return a value to the server. Until the answer is not sent, process execution on the server side is blocked.
+`sendrecv` represents an action that must return a value to the server. Until the answer is not sent, process execution on the server side is blocked.
 
 Websocket Server > Client
 ```json
 {
-  "type": "sendrcv",
+  "type": "sendrecv",
   "value": {
     "action": "confirm",
     "message": "Continue?",

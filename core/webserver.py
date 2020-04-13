@@ -76,9 +76,6 @@ class RpcHandler(tornado.web.RequestHandler):
     """
     Serves Core in REST mode
     """
-    def initialize(self):
-        self.ctlproxy = core.process.ControlProxy(self._receive_callback)
-
     async def get(self, path):
         await self._handle('GET', path)
 
@@ -103,7 +100,7 @@ class RpcHandler(tornado.web.RequestHandler):
             result = message['value']
 
             if result['action'] == 'saveauthtoken':
-                self.set_cookie('core-auth-token', result['token'], expires_days=result['days'])
+                self.set_cookie('core-auth-token', result['token'], expires=result['expireat'])
 
             elif result['action'] == 'delauthtoken':
                 self.clear_cookie('core-auth-token')
@@ -137,15 +134,14 @@ class RpcHandler(tornado.web.RequestHandler):
             request = WebServer.get_request(self)
             self.set_cookie('core-auth-token', request['token'])
             
-            result = await core.application.Application.process_pool.enqueue(self.ctlproxy, _rpc_dispatcher, 
-                path, kwargs, request)
+            worker = await core.application.Application.process_pool.getworker()
+            worker.recv_callback = self._receive_callback
+            worker.request(_rpc_dispatcher, path, kwargs, request)
+            result = await worker.recv()
 
             if result['value'] is not None:
                 self.set_header("Content-Type", 'application/json')
                 self.write(json.dumps(result['value']).encode("utf8"))
-
-        except core.process.RemoteError as ex:
-            self._send_error(ex.fmt_exception)
 
         except:
             self._send_error(Convert.formatexception())
@@ -171,24 +167,19 @@ def _ws_dispatch_open(request):
     if request['locale']:
         core.session.Session.language_code = request['locale']
     core.session.Session.start()
-    core.session.Session.register()
-    return core.session.Session.id    
 
 
-def _ws_dispatch_close(session_id):
+def _ws_dispatch_close():
     """
     Handles closing of websocket
     """
-    core.session.Session.load(session_id)
     core.session.Session.stop()
-    core.session.Session.unregister()
 
 
-def _ws_dispatch_message(session_id, message):
+def _ws_dispatch_message(message):
     """
     Dispatch new message coming from websocket
     """
-    core.session.Session.load(session_id)
     result = None
 
     if message['type'] == 'invoke':
@@ -212,7 +203,6 @@ def _ws_dispatch_message(session_id, message):
     else:
         raise Exception(label('Invalid message type'))  
 
-    core.session.Session.register()
     return result
 
 
@@ -221,8 +211,7 @@ class WsHandler(tornado.websocket.WebSocketHandler):
     Handles websocket
     """
     def initialize(self):
-        self.ctlproxy = core.process.ControlProxy(self._receive_callback)
-        self.session_id = ''
+        self.worker = None # type: core.process.Worker
 
     def check_origin(self, origin):
         return True
@@ -234,11 +223,12 @@ class WsHandler(tornado.websocket.WebSocketHandler):
     async def open(self):
         try:
             request = WebServer.get_request(self)
-            result = await core.application.Application.process_pool.enqueue(None, _ws_dispatch_open, request)
-            self.session_id = result['value']
 
-        except core.process.RemoteError as ex:
-            self._send_error(ex.fmt_exception)
+            self.worker = await core.application.Application.process_pool.getworker()
+            self.worker.keep_alive = True
+            self.worker.recv_callback = self._receive_callback
+            self.worker.request(_ws_dispatch_open, request)
+            await self.worker.recv()
 
         except:
             self._send_error(Convert.formatexception())            
@@ -254,19 +244,22 @@ class WsHandler(tornado.websocket.WebSocketHandler):
             message = json.loads(message)
 
             if message['type'] == 'answer':
-                result = await core.application.Application.process_pool.sendback(self.ctlproxy.id, message)
+                ans = {
+                    'message': 'answer',
+                    'value': message['value']
+                }
+                self.worker.send(ans)
+                
             else:
-                result = await core.application.Application.process_pool.enqueue(self.ctlproxy, 
-                    _ws_dispatch_message, self.session_id, message)
+                self.worker.request(_ws_dispatch_message, message)
+
+            result = await self.worker.recv()
             
             msg = {
-                'type': result['type'],
+                'type': result['message'],
                 'value': result['value']
             }
             self.write_message(json.dumps(msg))
-
-        except core.process.RemoteError as ex:
-            self._send_error(ex.fmt_exception)
 
         except:
             self._send_error(Convert.formatexception())          
@@ -274,40 +267,39 @@ class WsHandler(tornado.websocket.WebSocketHandler):
     def on_close(self):
         try:
             msg = {
-                'type': 'error',
+                'message': 'error',
                 'value': label('Client disconnected')
             }
-            asyncio.create_task(
-                core.application.Application.process_pool.sendback(self.ctlproxy.id, msg))
+            self.worker.send(msg)
+            asyncio.create_task(self.worker.recv())
         except:
             pass            
 
         try:
-            asyncio.create_task(
-                core.application.Application.process_pool.enqueue(None, 
-                    _ws_dispatch_close, self.session_id))
+            self.worker.request(_ws_dispatch_close)
+            asyncio.create_task(self.worker.recv())
         except:
             pass
 
+        self.worker.cleanup()
 
     def _receive_callback(self, message):
         """
         Receive callback from child process and send to websocket
         """
         try:
-            if message['type'] in ['send', 'sendrcv']:
+            if message['message'] in ['send', 'sendrecv']:
                 msg = {
-                    'type': message['type'],
+                    'type': message['message'],
                     'value': message['value']
                 }                
                 self.write_message(json.dumps(msg))
 
             else:
-                raise Exception(core.language.label('Invalid message \'{0}\' for client'.format(message['type'])))
+                raise Exception(core.language.label('Invalid message \'{0}\' for client'.format(message['message'])))
 
         except:     
             core.application.Application.logexception('webservr')
-
 
     def _send_error(self, exc):
         """
@@ -392,8 +384,9 @@ class WebServer:
 
     @staticmethod
     def _onloopexception(loop, context):
-        exc = context.get("exception", context["message"])
-        core.application.Application.log('webservr', 'W', str(exc))
+        # exc = context.get("exception", context["message"])
+        # core.application.Application.log('webservr', 'W', str(exc))
+        pass
 
     @staticmethod
     def stop():

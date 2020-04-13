@@ -4,34 +4,31 @@
 `ProcessPool` class handle multiple workers spawned in a separate process.
 
 Main `ProcessPool` is stored in `process_pool` variable of `Application` class. 
-`Application.sessions` is a multiprocess dictionary shared between all processes.
 
-`enqueue` method of `ProcessPool` search for an available worker and submit the
-job to be processed. If no workers are available, the method will hold until one of
+`getworker` method of `ProcessPool` search for an available worker or create one if permitted by maximum pool size. If no workers are available, the method will hold until one of
 worker end previous job and a warning event is logged.
 
-Each job must be submitted with these parameters:
-* `control` instance of `ControlProxy` class
+## Worker
+Once a worker is obtained from `ProcessPool` is possible set some properties:
+* `recv_callback` pointer to callback function (data coming from child for the parent)
+* `keep_alive` to keep busy the worker also if response is sent back to parent (useful to keep session data in memory, for socket session)
+
+Each job must be submitted via `request` method with these parameters:
 * `function` pointer to function to be executed
 * variable arguments for the function
 
-Each worker wait for a message coming on his pipe:
+Each child process wait for a message coming on his pipe:
 * `request` the function job is called and return value is send back into the 
 pipe as `response` message
 * `reload` tells `import` module to reload a specific file due changes
-
-`enqueue` waits for `response` message and returns. Special type `send` of `response` raises a callback into the parent.
+* `error` if an error happens on the client side (for example client disconnected)
 
 ![](img/worker.png)
 
-## ControlProxy and Control
-`ControlProxy` class is created by parent and has two members:
-* `receive_callback` that is function passed by `enqueue` method
-* `send` that allows parent to send a message to child
-
+## Control
 `Control` static class is created by child and has two members:
 * `send` that send a message to parent 
-* `sendrcv` that send a message to parent and wait for an answer
+* `sendrecv` that send a message to parent and wait for an answer
 
 ![](img/proxy.png)
 
@@ -54,14 +51,14 @@ After the handling of the request, `Session` is stopped and  if available the me
 ![](img/rpclife.png)
 
 ## Websocket request lifecycle
-When a new websocket is opened `Session` is started and registered in a multiprocess shared memory area because will be served by any available process in the pool.
+When a new websocket is opened `Session` is started and related worker is kept keep alive, so session state remain in process memory.
 
 ![](img/wsopen.png)
 
-When a new message arrives from websocket `Session` state is loaded from shared memory. If the request is handled successful, `Session` state is updated in shared memory for future requests.
+When a new message arrives from websocket it is forwarded to right process waiting into the pool.
 
 ![](img/wsmessage.png)
 
-When the websocket is closed `Session` is stopped and its state unregistered from shared memory.
+When the websocket is closed `Session` is stopped and process is cleaned up.
 
 ![](img/wsclose.png)

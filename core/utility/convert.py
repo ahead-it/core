@@ -4,6 +4,16 @@ import traceback
 import core.application
 
 
+class RemoteError(Exception):
+    """
+    Defines an error raised in child process. In 'fmt_exception' the remote exception well formatted 
+    with traceback.
+    """
+    def __init__(self, value):
+        super().__init__(value['message'])
+        self.fmt_exception = value
+
+
 class Convert():
     """
     Contains useful function for formatting and converting
@@ -70,6 +80,9 @@ class Convert():
         Returns a dict of the last exception
         """
         exc = sys.exc_info()
+
+        if isinstance(exc[1], RemoteError):
+            return exc[1].fmt_exception
 
         traces = []
         frames = traceback.extract_tb(exc[2])

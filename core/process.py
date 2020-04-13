@@ -9,7 +9,7 @@ from typing import List, Callable
 import core.application
 import core.language
 import core.session
-from core.utility.convert import Convert
+from core.utility.convert import Convert, RemoteError
 from core.utility.proxy import Reloader
 
 
@@ -30,61 +30,71 @@ class Control:
         Send an object to parent 
         """
         msg = {
-            'message': 'response',
-            'value': obj,
-            'success': True,
-            'type': 'send'
+            'message': 'send',
+            'value': obj
         }
         Control.pipe.send(msg)
 
     @staticmethod
-    def sendrcv(obj):
+    def sendrecv(obj):
         """
         Send an object to parent and wait for response
         """        
         msg = {
-            'message': 'response',
-            'value': obj,
-            'success': True,
-            'type': 'sendrcv'
+            'message': 'sendrecv',
+            'value': obj
         }
         Control.pipe.send(msg)
 
-        res = Control.pipe.recv()
-
-        if res['type'] == 'error':
-            raise Exception(res['value'])
-
-        if res['type'] != 'answer':
-            raise Exception(core.language.label('Invalid answer \'{0}\''.format(res['type'])))
-
+        res = Control.waitfor('answer')
         return res['value']
 
-class ControlProxy:
-    """
-    Wrapper around pipe used by *parent process*.
-    'receive_callback' is called into parent when a message is received from child.
-    """
-    def __init__(self, receive_callback: Callable[[any], None], session_id=None):
-        self.pipe = None # type: multiprocessing.Pipe
-        self.receive_callback = receive_callback # type: Callable[[any], None]
-        self.id = str(uuid.uuid4())
-
-    def send(self, obj):
+    @staticmethod
+    def response(obj):
         """
-        Send back to child
+        Send a respone to parent
         """
-        self.pipe.send(obj)
+        msg = {
+            'message': 'response',
+            'value': obj
+        }  
+        Control.pipe.send(msg)
 
+    @staticmethod
+    def error(err):
+        """
+        Send an error to parent
+        """        
+        try:
+            msg = {
+                'message': 'error',
+                'value': err
+            }
+            Control.pipe.send(msg)
 
-class RemoteError(Exception):
-    """
-    Defines an error raised in child process. In 'fmt_exception' the remote exception well formatted 
-    with traceback.
-    """
-    def __init__(self, value):
-        super().__init__(value['message'])
-        self.fmt_exception = value
+        except:
+            pass
+
+    @staticmethod
+    def waitfor(tag):
+        """
+        Receive a specific message from the parent, handling special methods
+        """
+        while True:
+            obj = Control.pipe.recv()
+
+            if obj['message'] == 'reload':
+                Reloader.reload_module(obj['value'])
+                continue
+
+            elif obj['message'] == 'error':
+                raise Exception(obj['value'])
+
+            elif obj['message'] == tag:
+                return obj
+            
+            else:
+                raise Exception(core.language.label('Received \'{0}\' message, waiting for \'{1}\''.format(obj['message'], tag)))
 
         
 def worker_loop(args):
@@ -99,61 +109,34 @@ def worker_loop(args):
         core.application.Application.initialize()
         core.application.Application._cli_loglevel = args['cli_loglevel']
         core.application.Application._log_lock = args['log_lock']
-        core.application.Application.sessions = args['sessions']
         
         core.application.Application.load_instance(args['instname'])
 
-        pipe = args['pipe']
-        Control.setpipe(pipe)
+        Control.setpipe(args['pipe'])
 
         core.session.Session.connect()
 
         core.application.Application.log('prcwrker', 'I', core.language.label('Process ready to work'))
 
         while True:
-            obj = pipe.recv()
-            
             try:
-                if obj['message'] == 'request':
-                    try:
-                        core.session.Session.initialize()
-                        
-                        msg = {
-                            'message': 'response',
-                            'value': obj['function'](*obj['args']),
-                            'success': True,
-                            'type': 'result'
-                        }
+                obj = Control.waitfor('request')
 
-                        core.utility.system.commit()   
-                        pipe.send(msg)                        
-                    except:
-                        core.application.Application.logexception('prcwrker')
+                if not obj['keepalive']:
+                    core.session.Session.initialize()
 
-                        try:
-                            msg = {
-                                'message': 'response',
-                                'value': Convert.formatexception(1),
-                                'success': False,
-                                'type': 'result'
-                            }
-                            pipe.send(msg)
-                        except:
-                            pass
-
-                elif obj['message'] == 'reload':
-                    Reloader.reload_module(obj['value'])
-
-                else:
-                    raise Exception(core.language.label('Unknown message \'{0}\''.format(obj)))
-
+                result = obj['function'](*obj['args'])
+                core.utility.system.commit()   
+                Control.response(result)                        
+    
+            except KeyboardInterrupt:
+                break
+            except EOFError:
+                break
             except:
                 core.application.Application.logexception('prcwrker')
+                Control.error(Convert.formatexception(1))   
 
-    except KeyboardInterrupt:
-        pass
-    except EOFError:
-        pass
     except:
         core.application.Application.logexception('prcwrker')
 
@@ -177,15 +160,24 @@ class Worker:
             'instname': core.application.Application.instance['name'],
             'cli_loglevel': core.application.Application._cli_loglevel,
             'log_lock': core.application.Application._log_lock,
-            'pipe': pipe_pair[1],
-            'sessions': core.application.Application.sessions
+            'pipe': pipe_pair[1]
         }  
 
         self.process = multiprocessing.Process(target=worker_loop, args=(args, ))
         self.pipe_pair = pipe_pair
         self.pipe = self.pipe_pair[0]
+
         self.busy = False
-        self.ctlproxy = None # type: ControlProxy
+        self.recv_callback = None # type: Callable[[any], None]
+        self.keep_alive = False
+
+    def cleanup(self):
+        """
+        Prepare a worker for next cycle
+        """
+        self.busy = False
+        self.recv_callback = None
+        self.keep_alive = False
 
     def start(self):
         """
@@ -193,30 +185,56 @@ class Worker:
         """
         self.process.start()
 
-    async def receive(self):
+    async def recv(self):
         """
-        Receive a message from the child. If message is of the 'send' type is dispatched to
-        the control callback. If 'response' message is not success a RemoteError is raised.
+        Receive a message from the child
         """
-        while True:
-            await asyncio.get_event_loop().run_in_executor(None, self.pipe.poll, None)
-            msg = self.pipe.recv()
+        try:
+            while True:
+                await asyncio.get_event_loop().run_in_executor(None, self.pipe.poll, None)
+                msg = self.pipe.recv()
 
-            if msg['type'] == 'send':
-                self.ctlproxy.receive_callback(msg)
-                continue
+                if msg['message'] == 'send':
+                    if self.recv_callback:
+                        self.recv_callback(msg)
+                    continue
 
-            break
-        
-        return msg
+                break
 
+            if msg['message'] == 'error':
+                raise RemoteError(msg['value'])
+            
+            return msg
+
+        finally:
+            if not self.keep_alive:
+                self.cleanup()
+
+    def send(self, obj):
+        """
+        Send a message to the child
+        """
+        self.pipe.send(obj)
+
+    def request(self, function, *args):
+        """
+        Send a request to the child
+        """
+        msg = {
+            'message': 'request',
+            'function': function,
+            'args': args,
+            'keepalive': self.keep_alive
+        }
+        self.pipe.send(msg)
 
 class ProcessPool:
     """
     Handles multiprocessing
     """    
 
-    def __init__(self, max_workers):
+    def __init__(self, min_workers, max_workers):
+        self.min_workers = min_workers
         self.max_workers = max_workers
         self.pool = [] # type: List[Worker]
         self.busy_event = threading.Event()
@@ -228,7 +246,8 @@ class ProcessPool:
         """
         worker = Worker()
         worker.start()
-        self.pool.append(worker)    
+        self.pool.append(worker)  
+        return worker  
 
     def start(self):
         """
@@ -238,12 +257,12 @@ class ProcessPool:
             asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
         core.application.Application.log('prcwrker', 'I', core.language.label(
-            'Starting {0} worker processes'.format(self.max_workers)))
+            'Starting {0} / {1} worker processes'.format(self.min_workers, self.max_workers)))
         
         self.exit = False
         self.busy_event.clear()
 
-        for i in range(0, self.max_workers):
+        for i in range(0, self.min_workers):
             self.add_worker()
 
     def stop(self):
@@ -271,80 +290,40 @@ class ProcessPool:
         """
         for worker in self.pool:
             worker.pipe.send({'message': 'reload', 'value': modulename})
-              
-    async def sendback(self, proxyid, obj):
+
+    async def getworker(self):
         """
-        Sendback an object to waiting process
-        """        
-        found = False
-        for worker in self.pool:
-            if worker.busy and (worker.ctlproxy is not None):
-                if worker.ctlproxy.id == proxyid:
-                    found = True
-                    worker.ctlproxy.send(obj)
-                    break
-
-        if (not found) and (obj['type'] != 'error'):
-            raise Exception(core.language.label('Proxy ID \'{0}\' not found'.format(proxyid))) 
-
-        return await self._receive(worker)
-
-    async def enqueue(self, ctlproxy: ControlProxy, function, *args):
+        Get a worker, the first available or a new one if is possible
         """
-        Enqueue a job in the first process available. If no one available will hold.
-        """        
+        result = None
+
         while not self.exit:
-            found = False
-            repeat = False
             for worker in self.pool:
                 if not worker.busy:
                     if not worker.process.is_alive():
                         core.application.Application.log('prcwrker', 'W', core.language.label(
                             'Process \'{0}\' is not responding, adding a new process to pool'.format(worker.process.pid)))
                         self.pool.remove(worker)
-                        self.add_worker()
-                        repeat = True
-                        break
+                        result = self.add_worker()
 
-                    msg = {
-                        'message': 'request',
-                        'function': function,
-                        'args': args
-                    }
-                    worker.busy = True
-                    worker.ctlproxy = ctlproxy
-                    if worker.ctlproxy is not None:
-                        worker.ctlproxy.pipe = worker.pipe
-                    worker.pipe.send(msg)
-                    found = True
+                    else:
+                        result = worker
+
                     break
-            
-            if repeat:
-                continue
-            elif found:
+
+            if (not result) and (len(self.pool) < self.max_workers):
+                core.application.Application.log('prcwrker', 'I', core.language.label('Adding a new process to pool {0}'.format(len(self.pool) + 1)))                
+                result = self.add_worker()
+
+            if result:
                 break
-            else:
-                core.application.Application.log('prcwrker', 'W', core.language.label('Process pool is full'))
-                await asyncio.get_event_loop().run_in_executor(None, self.busy_event.wait)
-                self.busy_event.clear()
 
-        if self.exit:
-            return
+            core.application.Application.log('prcwrker', 'W', core.language.label('Process pool is full {0}'.format(len(self.pool))))
+            await asyncio.get_event_loop().run_in_executor(None, self.busy_event.wait)
+            self.busy_event.clear()
 
-        return await self._receive(worker)
-
-    async def _receive(self, worker):
-        """
-        Receives data from worker
-        """
-        result = await worker.receive()
-
-        if result['type'] != 'sendrcv':
-            worker.ctlproxy = None
-            worker.busy = False
-            self.busy_event.set()
-
-        if not result['success']:
-            raise RemoteError(result['value'])
+        if result:
+            result.busy = True
 
         return result
+
