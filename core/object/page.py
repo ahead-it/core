@@ -28,8 +28,7 @@ class Page(Unit):
         Render a page into the client
         """
         self._register()
-        obj = Client.sendrcv(self._render())
-        print(obj)        
+        Client.send(self._render())
 
     def _render(self):
         """

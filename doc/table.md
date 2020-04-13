@@ -84,10 +84,47 @@ if cust.isempty():
 * `isempty` returns true if table is empty
 
 ## Sorting
-FIXME
+Tables are sorted by default by their primary keys.
+
+To change sorting:
+```python
+cust = Customer()
+cust.setcurrentkey(cust.name)
+cust.ascending(false)
+if cust.findfirst():
+    print(label('Last customer is \'{0}\''.format(cust.name.value)))
+```
+* `setcurrentkey` accepts one or more field to sort (primary key is always added at the end of the sorting)
+* `ascending` set orders up-bottom, bottom-up
 
 ## Filters
-FIXME
+Table start without filters, `reset` remove all filters and set
+default sorting key.
+
+To filter for a specific value or range:
+```python
+cust = Customer()
+cust.name.setrange('John')
+if not cust.isempty():
+    print(label('John exists'))
+```
+* `setrange` accepts three different calling
+  * without parameters, removes any filter from the field
+  * with a single parameter search for the value (equal comparison)
+  * with two parameters search between the values (min/max)
+
+To filter for a custom expression:
+```python
+cust = Customer()
+cust.name.setfiler('John|*ike*|{0}', 'Bill')
+if cust.findfirst():
+    print(label('Customer \'{0}\' found'.format(cust.name.value)))
+```
+* `setfilter` accepts various parameter
+  * a string expression with `|` logical OR operator, `&` logical AND operator, parenthesis, `*` wildcard LIKE operator, `<>=` equal, greater and lower operator, `..` range operator (`A..Z` between, `..Z` lower or equal than, `A..` greater or equal than)
+  * a placeholder for a specific value passed as parameter `{0}`, `{1}` and so on
+
+Filters can be set as various level with `setfilterlevel` function.
 
 ## Triggers
 Following triggers are raised:

@@ -17,7 +17,7 @@ class Client():
     """
 
     @staticmethod
-    def _send(message):
+    def send(message):
         """
         Send a message to client 
         """        
@@ -27,7 +27,7 @@ class Client():
         core.process.Control.send(message)
 
     @staticmethod
-    def _sendrcv(message):
+    def sendrcv(message):
         """
         Send a message to client and wait for response
         """        
@@ -47,7 +47,7 @@ class Client():
             'days': daysvalid
         }
 
-        Client._send(msg)
+        Client.send(msg)
 
     @staticmethod
     def destroy_auth_token():
@@ -58,7 +58,7 @@ class Client():
             'action': 'delauthtoken'
         }
 
-        Client._send(msg)
+        Client.send(msg)
 
     @staticmethod
     def message(message, title=None):
@@ -68,7 +68,7 @@ class Client():
             'title': title
         }
 
-        Client._send(msg)
+        Client.send(msg)
 
     @staticmethod
     def confirm(message, default=False, title=None):
@@ -79,4 +79,4 @@ class Client():
             'title': title
         }
 
-        return Client._sendrcv(msg)        
+        return Client.sendrcv(msg)        

@@ -19,7 +19,7 @@ class Control():
             self._parent._controls.append(self)
 
         elif issubclass(type(parent), Control):
-            self._page = parent.page
+            self._page = parent._page
             self._parent.controls.append(self)
 
         if self._page is not None:
@@ -38,6 +38,11 @@ class Control():
         for c in self.controls:
             ctl['controls'].append(c.render())
 
+        self._onrender(ctl)
+
         return ctl
 
-        
+    def _onrender(self, obj):
+        """
+        Render event to be inherited
+        """ 

@@ -229,3 +229,4 @@ these severities:
 * [Language Reference](doc/reference.md)
 * [System Objects](doc/sysobjects.md)
 * [Multiprocessing Architecture](doc/multiprocessing.md)
+* [Client Development](doc/client.md)
