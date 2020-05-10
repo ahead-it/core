@@ -90,6 +90,12 @@ class System():
         modname = System.get_caller_modulename(3)
         return System.get_appname(modname)
 
+def getnone():
+    """
+    Returns none (parser type hint fix)
+    """
+    none = None
+    return none
 
 def error(message):
     """

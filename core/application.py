@@ -69,6 +69,7 @@ class Application:
 
             Application._assert_default(opts, 'display_name', instname)
             Application._assert_default(opts, 'db_debug', False)
+            Application._assert_default(opts, 'ws_debug', False)
             Application._assert_default(opts, 'dataset_size', 50)
             Application._assert_default(opts, 'webserver_enabled', False)
             Application._assert_default(opts, 'webserver_port', 8080)

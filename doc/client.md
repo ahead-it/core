@@ -64,12 +64,12 @@ Websocket Client > Server
 Websocket Server > Client
 ```json
 {
-  "type": "result",
+  "type": "response",
   "value": null
 }
 ```
 
-The `result` is the returning value of `run` function of `app.page.Welcome` page. For each `invoke` request there is a `result` response.
+The `response` is the returning value of `run` function of `app.page.Welcome` page. For each `invoke` request there is a `response` response.
 
 But in websocket client mode, more message will come from server when running a page.
 
@@ -238,7 +238,7 @@ Websocket Server > Client
 Above JSON represents a request for a new page in the client.
 
 ## Messages
-Not only `invoke` / `result` pair, other messages are handled.
+Not only `invoke` / `response` pair, other messages are handled.
 
 `send` represents an action to be executed by the client without returning a value to the server (for example control refresh, popup message...)
 
@@ -277,6 +277,30 @@ Websocket Client > Server
 }
 ```
 
+### Message
+It tells to the client to show a popup message.
+
+```json
+{
+  "action": "message",
+  "message": "Error 2 pressed",
+  "title": null
+}
+```
+
+### Confirm
+It tells to the client to show a confirm message. The answer value is boolean.
+
+```json
+{
+  "action": "confirm",
+  "message": "Continue?",
+  "default": false,
+  "title": null
+}
+```
+* `default` is the default button of the popup (Yes or No)
+
 ## Interact with controls
 Each control is owned by a page. Page and control have their own ID.
 
@@ -295,3 +319,42 @@ Websocket Client > Server
 }
 ```
 * `_ctlinvoke` is a magic method of the page object that calls the requested function of the specified control.
+
+## Dataset
+Each page is bound to a dataset. Dataset comes from database tables.
+
+```json
+...
+  "dataset": [
+    {
+      "caption": "ID",
+      "codename": "id",
+      "type": "Code"
+    },
+    {
+      "caption": "Name",
+      "codename": "name",
+      "type": "Text"
+    },
+    {
+      "caption": "E-Mail",
+      "codename": "email",
+      "type": "Code"
+    },
+    {
+      "caption": "Enabled",
+      "codename": "enabled",
+      "type": "Boolean"
+    },
+    {
+      "caption": "Password",
+      "codename": "password",
+      "type": "Text"
+    },
+    {
+      "caption": "Last login",
+      "codename": "lastlogin",
+      "type": "DateTime"
+    }
+  ]
+```

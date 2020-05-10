@@ -243,6 +243,9 @@ class WsHandler(tornado.websocket.WebSocketHandler):
         try:
             message = json.loads(message)
 
+            if core.application.Application.instance['ws_debug']:
+                core.application.Application.log('websocket', 'D', "<< " + json.dumps(message))
+
             if message['type'] == 'answer':
                 ans = {
                     'message': 'answer',
@@ -259,7 +262,7 @@ class WsHandler(tornado.websocket.WebSocketHandler):
                 'type': result['message'],
                 'value': result['value']
             }
-            self.write_message(json.dumps(msg))
+            self._write_messaged(json.dumps(msg))
 
         except:
             self._send_error(Convert.formatexception())          
@@ -293,7 +296,7 @@ class WsHandler(tornado.websocket.WebSocketHandler):
                     'type': message['message'],
                     'value': message['value']
                 }                
-                self.write_message(json.dumps(msg))
+                self._write_messaged(json.dumps(msg))
 
             else:
                 raise Exception(core.language.label('Invalid message \'{0}\' for client'.format(message['message'])))
@@ -306,7 +309,16 @@ class WsHandler(tornado.websocket.WebSocketHandler):
         Returns JSON error in case of exception
         """
         exc['type'] = 'exception'
-        self.write_message(json.dumps(exc))
+        self._write_messaged(json.dumps(exc))
+
+    def _write_messaged(self, message):
+        """
+        Write a message to socket with debugging
+        """
+        if core.application.Application.instance['ws_debug']:
+            core.application.Application.log('websocket', 'D', ">> " + message)
+
+        self.write_message(message)
 
 
 class StaticHandler(tornado.web.StaticFileHandler):

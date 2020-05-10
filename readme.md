@@ -70,6 +70,7 @@ Name of the istance is the name of the folder containing
 ```
 Additional properties:
 * `db_debug` if True will log each query on instance log file, with parameters, time, caller and session identifier (default: False)
+* `ws_debug` if True will log websocket dialog (default: False)
 * `dataset_size` is the number of rows fetched from a single SELECT from the database (default: 50)
 * `webserver_enabled` enable or disable the webserver (default: False)
 * `webserver_port` set the TCP port where webserver will listen (default: 8080)
@@ -167,7 +168,7 @@ To invoke a method:
 The result will be:
 ```json
 {
-  "type": "result",
+  "type": "response",
   "value": 7
 }
 ```
