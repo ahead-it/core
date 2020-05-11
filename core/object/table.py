@@ -91,6 +91,7 @@ class Table(Unit):
         """
         Initialize all fields
         """
+        self._rowversion = None
         for field in self._fields:
             field.init()
 

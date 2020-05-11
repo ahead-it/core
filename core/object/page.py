@@ -67,6 +67,15 @@ class Page(Unit):
 
         return page
 
+    def _getdatarow(self):
+        """
+        Returns current data row
+        """
+        line = []
+        for f in self.rec._fields:
+            line.append(f.serialize(f.value))
+        return line
+
     def _getdata(self, limit=1, sorting=None, filters=None):
         """
         Returns data
@@ -75,10 +84,8 @@ class Page(Unit):
         if self.rec is not None:
             if self.rec.findset():
                 while self.rec.read() and (limit > 0):
-                    line = []
-                    for f in self.rec._fields:
-                        line.append(f.value)
-                    self._dataset.append(line)
+                    self._dataset.append(self._getdatarow())
+
                     limit -= 1
 
         return self._dataset
@@ -91,14 +98,18 @@ class Page(Unit):
             self._currentrow = row
 
             if self.rec is not None:
-                pk = []
-                i = 0;
-                for f in self.rec._fields:
-                    if f in self.rec._primarykey:
-                        pk.append(self._dataset[self._currentrow][i])
-                    i += 1
-                
-                self.rec.get(*pk)
+                if self._currentrow < 0:
+                    self.rec.init()
+
+                else:
+                    pk = []
+                    i = 0;
+                    for f in self.rec._fields:
+                        if f in self.rec._primarykey:
+                            pk.append(self._dataset[self._currentrow][i])
+                        i += 1
+                    
+                    self.rec.get(*pk)
 
     def _ctlinvoke(self, controlid, method, *args, **kwargs):
         """

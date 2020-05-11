@@ -22,3 +22,6 @@ class Decimal(Field):
             return decimal.Decimal(str(value))
         else:
             return decimal.Decimal(value)        
+
+    def serialize(self, value):
+        return str(value)

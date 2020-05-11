@@ -35,7 +35,7 @@ Following triggers are raised:
 ## Magic methods
 * `_ctlinvoke(controlid, method, args)` invoke specified method in the control identified by ID passing arguments
 * `_getdata(limit, sorting, filters)` returns data limited to specified rows, with sorting and filters applied
-* `_selectrow(row)` select current row in the dataset
+* `_selectrow(row)` select current row in the dataset (-1 for new rows)
 
 ## AppCenter
 Represents the main container of other controls with navigation pane, action area, user control, search...

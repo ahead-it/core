@@ -25,3 +25,5 @@ class DateTime(Field):
             
         return value
         
+    def serialize(self, value):
+        return Convert.formatdatetime3(value)

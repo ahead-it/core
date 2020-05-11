@@ -173,6 +173,12 @@ class Field():
         """
         return value
         
+    def serialize(self, value):
+        """
+        Serialize value
+        """
+        return value
+
     def validate(self, value):
         """
         Assign value an trigger on validate method

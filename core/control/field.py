@@ -37,5 +37,15 @@ class Field(Control):
             value = self.field.evaluate(value)
         
         self.field.validate(value)
+
         if self._page.rec is not None:
-            self._page.rec.modify(True)
+            if self._page.rec._rowversion is None:
+                self._page.rec.insert(True)
+
+                self._page._dataset.append(self._page._getdatarow())
+                self._page._currentrow = len(self._page._dataset) - 1
+
+            else:
+                self._page.rec.modify(True)
+
+        return self._page._getdatarow()
