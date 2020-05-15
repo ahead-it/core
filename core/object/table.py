@@ -228,6 +228,15 @@ class Table(Unit):
         """
         return core.session.Session.database.table_isempty(self)
 
+    def getposition(self):
+        """
+        Returns the current primary key of the record
+        """
+        val = []
+        for f in self._primarykey:
+            val.append(f.value)
+        return val
+
     def get(self, *pk):
         """
         Get record by primary key

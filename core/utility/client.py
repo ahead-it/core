@@ -62,6 +62,9 @@ class Client():
 
     @staticmethod
     def message(message, title=None):
+        """
+        Show a popup message on the client
+        """
         msg = {
             'action': 'message',
             'message': message,
@@ -72,6 +75,9 @@ class Client():
 
     @staticmethod
     def confirm(message, default=False, title=None):
+        """
+        Ask confirm to the user
+        """        
         msg = {
             'action': 'confirm',
             'message': message,
@@ -80,3 +86,4 @@ class Client():
         }
 
         return Client.sendrecv(msg)        
+ 

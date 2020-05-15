@@ -1,11 +1,10 @@
-from typing import List, Dict
+from typing import List, Dict, Callable
 from core.object.unit import Unit
 from core.object.unit import UnitType
 from core.control.control import Control
 from core.control.contentarea import ContentArea
 from core.control.actions import ActionArea, Action
 from core.utility.client import Client
-from core.utility.system import getnone
 from core.language import label
 from core.utility.system import error
 import core.session
@@ -28,9 +27,9 @@ class Page(Unit):
         self._modifyallowed = True
         self._deleteallowed = True
         self._readonly = False
-        self._cardPage = None
-
-        self.rec = getnone() # type: core.object.table.Table
+        self._cardPage = None # type: Callable[[], Page]
+        
+        self.rec = None # type: core.object.table.Table
         
         self._init()
         self._init_check()
@@ -50,6 +49,55 @@ class Page(Unit):
         obj = self._render()
         obj['action'] = 'page'
         Client.send(obj)
+
+    def update(self):
+        """
+        Refresh data in the client
+        """
+        msg = {
+            'action': 'refresh',
+            'pageid': self._id,
+        }
+        Client.send(msg)
+
+    def _close(self, mandatory=False):
+        """
+        Client magic method to handle close
+        """
+        if not mandatory:
+            if not self._onqueryclose():
+                return False
+
+        self._onclose()
+        self._unregister()
+        return True
+
+    def close(self):
+        """
+        Close the page
+        """
+        if not self._onqueryclose():
+            return
+
+        msg = {
+            'action': 'close',
+            'pageid': self._id,
+        }
+        Client.send(msg)    
+
+        self._onclose()
+        self._unregister()
+
+    def _onqueryclose(self):
+        """
+        Query if the page is closeable
+        """
+        return True
+
+    def _onclose(self):
+        """
+        Closing event
+        """
 
     def _render(self):
         """
@@ -99,11 +147,24 @@ class Page(Unit):
 
         if actArea is None:
             actArea = ActionArea(contArea)
+            actArea.move_first()
 
-        recbtn = Action(actArea, label('Record'), category='record')
-        
-        if (not self._readonly) and self._insertallowed:
-            self._newbtn = Action(actArea, label('New'))
+        recbtn = Action(actArea, label('Record'), 'record', category='record')
+
+        if (not self._readonly) and self.rec:
+            if self._insertallowed:
+                self._newbtn = Action(recbtn, label('New'), 'new')
+
+            if self._modifyallowed:
+                self._modbtn = Action(recbtn, label('Modify'), 'modify') 
+
+        self._refbtn = Action(recbtn, label('Refresh'), 'refresh')            
+
+    def __refbtn_click(self):
+        """
+        Refresh button
+        """
+        self.update()
 
     def __newbtn_click(self):
         """
@@ -113,6 +174,18 @@ class Page(Unit):
             card = self._cardPage()
             card.rec.init()
             card.run()
+
+    def __modbtn_click(self):
+        """
+        Modify button
+        """
+        if not self._selectedrows:
+            return
+
+        if self._cardPage:
+            card = self._cardPage()
+            card.rec.get(*self._getrowpk(self._selectedrows[0]))
+            card.run()            
 
     def _getdatarow(self):
         """
@@ -137,7 +210,7 @@ class Page(Unit):
             return
 
         for i in self._selectedrows:
-            self._getrowbypk(i)
+            self.rec.get(*self._getrowpk(i))
             self.rec.delete(True)
 
         self._selectedrows = []
@@ -166,7 +239,7 @@ class Page(Unit):
             'count': self._count
         }
 
-    def _getrowbypk(self, index):
+    def _getrowpk(self, index):
         """
         Locate current record to index with primary key 
         """
@@ -177,7 +250,7 @@ class Page(Unit):
                 pk.append(self._dataset[index][i])
             i += 1
         
-        self.rec.get(*pk)
+        return pk
         
     def _selectrows(self, rows):
         """
@@ -190,7 +263,7 @@ class Page(Unit):
                 if not self._selectedrows:
                     self.rec.init()
                 else:
-                    self._getrowbypk(self._selectedrows[0])
+                    self.rec.get(*self._getrowpk(self._selectedrows[0]))
                     
     def _ctlinvoke(self, controlid, method, *args, **kwargs):
         """
