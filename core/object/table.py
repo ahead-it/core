@@ -237,6 +237,18 @@ class Table(Unit):
             val.append(f.value)
         return val
 
+    def setpkfilter(self, *pk):
+        """
+        Filter by primary key
+        """
+        i = 0
+        for f in self._primarykey:
+            if len(pk) > i:
+                f.setrange(pk[i])
+            else:
+                f.setrange(f.value)
+            i += 1
+
     def get(self, *pk):
         """
         Get record by primary key

@@ -188,6 +188,16 @@ class Field():
         if self._parent and hasattr(self._parent, m):
             a = getattr(self._parent, m)
             a()
+
+    def _getrelation(self):
+        """
+        Return relation based on current value
+        """
+        if not self._relations:
+            return None
+
+        # FIXME
+        return self._relations[0]
             
     def related(self, to, field=None, when=None, filters=None):
         """

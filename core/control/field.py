@@ -28,7 +28,32 @@ class Field(Control):
         obj['codename'] = self.field._codename
         obj['controltype'] = FieldType.name(self.type)
         obj['datatype'] = core.field.field.FieldType.name(self.field.type)
-        
+
+        if self.field._relations:
+            obj['hasrelations'] = True
+
+    def getrelated(self, value=''):
+        """
+        Get relations
+        """
+        rel = self.field._getrelation()
+
+        dataset = []
+        schema = []
+        if rel:
+            tab = rel['to']()
+
+            schema = self._page._getschema(tab)
+
+            if tab.findset():
+                while tab.read():
+                    dataset.append(self._page._getdatarow(tab))
+
+        return {
+            'schema': schema,
+            'dataset': dataset
+        }
+
     def validate(self, value, parsevalue=True):
         """
         Handle UI validation
@@ -42,10 +67,10 @@ class Field(Control):
             if self._page.rec._rowversion is None:
                 self._page.rec.insert(True)
 
-                self._page._dataset.append(self._page._getdatarow())
+                self._page._dataset.append(self._page._getdatarow(self._page.rec))
                 self._page._currentrow = len(self._page._dataset) - 1
 
             else:
                 self._page.rec.modify(True)
 
-        return self._page._getdatarow()
+        return self._page._getdatarow(self._page.rec)

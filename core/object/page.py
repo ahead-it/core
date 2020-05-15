@@ -115,16 +115,26 @@ class Page(Unit):
 
         dataset = []
         if self.rec is not None:
-            for f in self.rec._fields:
-                itm = {
-                    'caption': f.caption,
-                    'codename': f._codename,
-                    'type': f.__class__.__name__
-                }
-                dataset.append(itm)
-        page['dataset'] = dataset
+            dataset = self._getschema(self.rec)
+
+        page['schema'] = dataset
 
         return page
+
+    def _getschema(self, rec):
+        """
+        Return record schema
+        """
+        schema = []
+        for f in rec._fields:
+            itm = {
+                'caption': f.caption,
+                'codename': f._codename,
+                'type': f.__class__.__name__
+            }
+            schema.append(itm)
+
+        return schema
 
     def _add_defaultactions(self):
         """
@@ -160,13 +170,13 @@ class Page(Unit):
 
         self._refbtn = Action(recbtn, label('Refresh'), 'refresh')            
 
-    def __refbtn_click(self):
+    def _refbtn_click(self):
         """
         Refresh button
         """
         self.update()
 
-    def __newbtn_click(self):
+    def _newbtn_click(self):
         """
         New button
         """
@@ -175,7 +185,7 @@ class Page(Unit):
             card.rec.init()
             card.run()
 
-    def __modbtn_click(self):
+    def _modbtn_click(self):
         """
         Modify button
         """
@@ -184,15 +194,15 @@ class Page(Unit):
 
         if self._cardPage:
             card = self._cardPage()
-            card.rec.get(*self._getrowpk(self._selectedrows[0]))
+            card.rec.setpkfilter(*self._getrowpk(self._selectedrows[0]))
             card.run()            
 
-    def _getdatarow(self):
+    def _getdatarow(self, rec):
         """
         Returns current data row
         """
         line = []
-        for f in self.rec._fields:
+        for f in rec._fields:
             line.append(f.serialize(f.value))
         return line
     
@@ -227,7 +237,7 @@ class Page(Unit):
 
             if self.rec._findset(size=limit, offset=offset):
                 while (limit > 0) and self.rec.read():
-                    self._dataset.append(self._getdatarow())
+                    self._dataset.append(self._getdatarow(self.rec))
 
                     limit -= 1
 
@@ -277,6 +287,9 @@ class Page(Unit):
         """
         Invoke method of page
         """
+        if method.startswith('__'):
+            method = method[1:]
+
         if hasattr(self, method):
             fun = getattr(self, method)
             return fun(*args, **kwargs)
