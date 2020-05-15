@@ -64,6 +64,11 @@ class Server():
         Returns true if the table is empty with current filters
         """
 
+    def table_count(self, table: core.object.table.Table):
+        """
+        Returns the total number of rows
+        """
+
     def table_deleteall(self, table: core.object.table.Table):
         """
         Delete all record matching the current filter
@@ -89,7 +94,7 @@ class Server():
         Delete a record in the database
         """        
 
-    def table_findset(self, table: core.object.table.Table):
+    def table_findset(self, table: core.object.table.Table, size=None, offset=None):
         """
         Select dataset from the database
         """

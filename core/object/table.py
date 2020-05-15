@@ -180,7 +180,13 @@ class Table(Unit):
         """
         Select a set of rows based on current key and filters
         """
-        self._dataset = core.session.Session.database.table_findset(self)
+        return self._findset()
+
+    def _findset(self, size=None, offset=None):
+        """
+        Select a set of rows based on current key and filters (with pagination)
+        """
+        self._dataset = core.session.Session.database.table_findset(self, size=size, offset=offset)
         self._currentrow = -1
         if len(self._dataset) > 0:
             return True
@@ -209,6 +215,12 @@ class Table(Unit):
         core.session.Session.database.table_loadrow(self, self._dataset[self._currentrow])
         self._accept_changes()
         return True
+
+    def count(self):
+        """
+        Returns the total number of rows
+        """
+        return core.session.Session.database.table_count(self)
 
     def isempty(self):
         """

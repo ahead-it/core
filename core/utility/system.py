@@ -97,7 +97,7 @@ def getnone():
     none = None
     return none
 
-def error(message):
+def error(message=''):
     """
     Raise an exception with provided message
     """

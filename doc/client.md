@@ -357,4 +357,58 @@ Each page is bound to a dataset. Dataset comes from database tables.
       "type": "DateTime"
     }
   ]
+...
 ```
+
+Each field control is bound to the dataset through `codename`.
+
+```json
+...
+  {
+    "id": "7a022b51-acd3-4f9c-9344-1359c4ec0c18",
+    "type": "Field",
+    "controls": [],
+    "caption": "ID",
+    "codename": "id",
+    "controltype": "DEFAULT",
+    "datatype": "CODE"
+  },
+  {
+    "id": "6b81644a-cb97-49c6-b73e-14afb1c2666c",
+    "type": "Field",
+    "controls": [],
+    "caption": "Name",
+    "codename": "name",
+    "controltype": "DEFAULT",
+    "datatype": "TEXT"
+  },
+  {
+    "id": "7ee4f035-098b-4de4-b7cc-d88e072ea585",
+    "type": "Field",
+    "controls": [],
+    "caption": "E-Mail",
+    "codename": "email",
+    "controltype": "DEFAULT",
+    "datatype": "TEXT"
+  },
+  {
+    "id": "60af6880-ac7d-4e52-b1f9-02c80d1e4413",
+    "type": "Field",
+    "controls": [],
+    "caption": "Password",
+    "codename": "password",
+    "controltype": "PASSWORD",
+    "datatype": "TEXT"
+  },
+  {
+    "id": "b71ee1ff-f94a-41d5-8a40-efffec0b5c3f",
+    "type": "Field",
+    "controls": [],
+    "caption": "Enabled",
+    "codename": "enabled",
+    "controltype": "DEFAULT",
+    "datatype": "BOOLEAN"
+  }
+...
+```
+

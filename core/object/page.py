@@ -4,6 +4,8 @@ from core.object.unit import UnitType
 from core.control.control import Control
 from core.utility.client import Client
 from core.utility.system import getnone
+from core.language import label
+from core.utility.system import error
 import core.session
 import core.object.table
 
@@ -18,7 +20,8 @@ class Page(Unit):
         self._controls = []  # type: List[Control]
         self._allcontrols = {} # type: Dict[str, Control]
         self._dataset = []
-        self._currentrow = None
+        self._selectedrows = [] 
+        self._count = None
 
         self.rec = getnone() # type: core.object.table.Table
 
@@ -75,42 +78,76 @@ class Page(Unit):
         for f in self.rec._fields:
             line.append(f.serialize(f.value))
         return line
+    
+    def _delete(self):
+        """
+        Delete selected rows
+        """
+        if not self._selectedrows:
+            return
 
-    def _getdata(self, limit=1, sorting=None, filters=None):
+        if self.rec is None:
+            return
+
+        if not Client.confirm(label('Delete {0} {1}?'.format(len(self._selectedrows), self.rec._caption))):
+            return
+
+        for i in self._selectedrows:
+            self._getrowbypk(i)
+            self.rec.delete(True)
+
+        self._selectedrows = []
+
+    def _getdata(self, offset=0, limit=1, sorting=None, filters=None):
         """
         Returns data
         """
         self._dataset = []
+
         if self.rec is not None:
-            if self.rec.findset():
-                while self.rec.read() and (limit > 0):
+            if offset == 0:
+                self._count = self.rec.count()
+
+            if self.rec._findset(size=limit, offset=offset):
+                while (limit > 0) and self.rec.read():
                     self._dataset.append(self._getdatarow())
 
                     limit -= 1
 
-        return self._dataset
+        else:
+            self._count = 1
 
-    def _selectrow(self, row):
+        return {
+            'dataset': self._dataset,
+            'count': self._count
+        }
+
+    def _getrowbypk(self, index):
         """
-        Change current row
+        Locate current record to index with primary key 
+        """
+        pk = []
+        i = 0
+        for f in self.rec._fields:
+            if f in self.rec._primarykey:
+                pk.append(self._dataset[index][i])
+            i += 1
+        
+        self.rec.get(*pk)
+        
+    def _selectrows(self, rows):
+        """
+        Change current selection
         """ 
-        if self._currentrow != row:
-            self._currentrow = row
+        if self._selectedrows != rows:
+            self._selectedrows = rows
 
             if self.rec is not None:
-                if self._currentrow < 0:
+                if not self._selectedrows:
                     self.rec.init()
-
                 else:
-                    pk = []
-                    i = 0;
-                    for f in self.rec._fields:
-                        if f in self.rec._primarykey:
-                            pk.append(self._dataset[self._currentrow][i])
-                        i += 1
+                    self._getrowbypk(self._selectedrows[0])
                     
-                    self.rec.get(*pk)
-
     def _ctlinvoke(self, controlid, method, *args, **kwargs):
         """
         Invoke method of a control

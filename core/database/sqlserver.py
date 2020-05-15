@@ -422,9 +422,12 @@ class SqlServer(core.database.server.Server):
 
         return where
 
-    def _table_findset(self, table: core.object.table.Table, size, nextset, ascending, pk):
+    def _table_findset(self, *, table: core.object.table.Table, size=None, offset=None, nextset=False, ascending=None, pk=None):
         pars = []
-        sql = 'SELECT TOP ' + str(size) + ' '
+        if ascending is None:
+            ascending = table.ascending
+
+        sql = 'SELECT '
 
         for field in table._fields:
             sql += '[' + field.sqlname + '], '
@@ -473,22 +476,30 @@ class SqlServer(core.database.server.Server):
                 if not ascending:
                     sql += ' DESC'
 
+            if offset is None:
+                offset = 0
+            
+            if size is None:
+                size = self.dataset_size
+
+            sql += 'OFFSET ' + str(offset) + ' ROWS FETCH FIRST ' + str(size) + ' ROWS ONLY'
+
         return self.query(sql, pars)
 
     def table_get(self, table: core.object.table.Table, pk):
-        return self._table_findset(table, 1, False, False, pk)
+        return self._table_findset(table=table, pk=pk)
 
-    def table_findset(self, table: core.object.table.Table):
-        return self._table_findset(table, self.dataset_size, False, table._ascending, None)
+    def table_findset(self, table: core.object.table.Table, size=None, offset=None):
+        return self._table_findset(table=table, size=size, offset=offset)
 
     def table_nextset(self, table: core.object.table.Table):
-        return self._table_findset(table, self.dataset_size, True, table._ascending, None)
+        return self._table_findset(table=table, nextset=True)
 
     def table_findfirst(self, table: core.object.table.Table):
-        return self._table_findset(table, 1, False, table._ascending, None)
+        return self._table_findset(table=table, size=1)
 
     def table_findlast(self, table: core.object.table.Table):
-        return self._table_findset(table, 1, False, not (table._ascending ^ False), None)
+        return self._table_findset(table=table, size=1, ascending=not (table._ascending ^ False))
 
     def table_loadrow(self, table: core.object.table.Table, row: dict):
         for field in table._fields:
@@ -507,7 +518,18 @@ class SqlServer(core.database.server.Server):
         if not self.query(sql, pars):
             return True
         else:
-            return False    
+            return False   
+
+    def table_count(self, table: core.object.table.Table):
+        pars = []
+        sql = 'SELECT COUNT(*) [c] FROM [' + table._sqlname + ']'
+
+        where = self._get_where(table, pars)
+        if where:
+            sql += ' WHERE ' + ' AND '.join(where)
+
+        qry = self.query(sql, pars)
+        return qry[0]['c']
 
     def table_deleteall(self, table: core.object.table.Table):            
         pars = []
