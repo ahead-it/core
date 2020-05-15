@@ -7,7 +7,7 @@ class Group(Control):
     Implements the group
     """    
     
-    def __init__(self, parent, caption):
+    def __init__(self, parent, caption=''):
         super().__init__(parent)
         self.caption = caption
 

@@ -47,14 +47,18 @@ Actions can be nested to generate menu trees.
 Available properties:
 * `caption`
 * `icon`
-* `descripton`
+* `descripton` 
+* `category` changes button appearance (predefined string value or custom)
+  * `record` for data  actions (new, modify, delete, refresh...)
+  * `process` for business actions (register, send, process...)
+  * `related` for related information to main record (ex. from customer to shipping addresses)
+  * `report` for reporting (PDF...)
 
 Available methods:
 * `click`
 
 Allowed childs:
 * `Action`
-
 
 ## Search
 Available as `AppCenter` child, represents generic and free text search.

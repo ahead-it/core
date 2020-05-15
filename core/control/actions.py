@@ -7,12 +7,13 @@ class Action(Control):
     Implements action
     """   
 
-    def __init__(self, parent, caption, icon=None):
+    def __init__(self, parent, caption, icon=None, category=None):
         super().__init__(parent)
 
         self.caption = caption
         self.icon = icon
         self.description = None
+        self.category = category
 
     def _onrender(self, obj):
         obj['caption'] = self.caption
@@ -20,6 +21,8 @@ class Action(Control):
             obj['icon'] = self.icon
         if self.description: 
             obj['description'] = self.description
+        if self.category:
+            obj['category'] = self.category
 
     def click(self):
         """

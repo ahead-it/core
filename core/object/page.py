@@ -2,6 +2,8 @@ from typing import List, Dict
 from core.object.unit import Unit
 from core.object.unit import UnitType
 from core.control.control import Control
+from core.control.contentarea import ContentArea
+from core.control.actions import ActionArea, Action
 from core.utility.client import Client
 from core.utility.system import getnone
 from core.language import label
@@ -22,11 +24,17 @@ class Page(Unit):
         self._dataset = []
         self._selectedrows = [] 
         self._count = None
+        self._insertallowed = True
+        self._modifyallowed = True
+        self._deleteallowed = True
+        self._readonly = False
+        self._cardPage = None
 
         self.rec = getnone() # type: core.object.table.Table
-
+        
         self._init()
         self._init_check()
+        self._add_defaultactions()
 
         for m in self.__dict__:
             a = getattr(self, m)
@@ -69,6 +77,42 @@ class Page(Unit):
         page['dataset'] = dataset
 
         return page
+
+    def _add_defaultactions(self):
+        """
+        Add default action to page
+        """
+        contArea = None
+        for c in self._controls:
+            if isinstance(c, ContentArea):
+                contArea = c
+                break
+
+        if contArea is None:
+            return
+
+        actArea = None
+        for c in contArea._controls:
+            if isinstance(c, ActionArea):
+                actArea = c
+                break
+
+        if actArea is None:
+            actArea = ActionArea(contArea)
+
+        recbtn = Action(actArea, label('Record'), category='record')
+        
+        if (not self._readonly) and self._insertallowed:
+            self._newbtn = Action(actArea, label('New'))
+
+    def __newbtn_click(self):
+        """
+        New button
+        """
+        if self._cardPage:
+            card = self._cardPage()
+            card.rec.init()
+            card.run()
 
     def _getdatarow(self):
         """
