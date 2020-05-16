@@ -19,7 +19,6 @@ class Convert:
     """
     Contains useful function for formatting and converting
     """
-
     @staticmethod
     def to_sqlname(name):
         """
@@ -40,40 +39,6 @@ class Convert:
                 sqlname += '_'
 
         return sqlname
-
-    @staticmethod
-    def formatdatetime1(dt: datetime = None):
-        """
-        Returns YYYY-MM-DD HH:MM:SS.NNN
-        """
-        if dt is None:
-            dt = datetime.now()
-        return dt.strftime('%Y-%m-%d %H:%M:%S') + '.' + dt.strftime('%f')[:3]
-
-    @staticmethod
-    def formatdatetime2(dt: datetime = None):
-        """
-        Returns YYYY-MM-DD
-        """
-        if dt is None:
-            dt = datetime.now()        
-        return dt.strftime('%Y-%m-%d')    
-
-    @staticmethod
-    def formatdatetime3(dt: datetime = None):
-        """
-        Returns YYYY-MM-DDTHH:MM:SS.NNN (UTC in ISO format with fixed microsecond)
-        """
-        if dt is None:
-            dt = datetime.now(timezone.utc)
-
-        res = dt.strftime('%Y-%m-%d')
-        if not dt.utcoffset():
-            res += 'T'
-        res += dt.strftime('%H:%M:%S') + '.' + dt.strftime('%f')[:3]
-        if dt.utcoffset():
-            res += '+' + dt.strftime('%z')
-        return res
 
     @staticmethod
     def formatexception(skip_trace=0):

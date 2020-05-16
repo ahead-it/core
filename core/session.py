@@ -3,6 +3,8 @@ import locale
 import uuid
 import os
 import socket
+from datetime import timezone
+from dateutil import tz
 from typing import Dict
 import core.application
 import core.object.unit
@@ -16,6 +18,7 @@ class SessionData():
     Contains in memory session data
     """
     def __init__(self):
+        self.timezone = tz.tzlocal()
         self.language_code = locale.getdefaultlocale()[0]
         self.id = str(uuid.uuid4())
         self.type = 'cli' 
@@ -67,10 +70,11 @@ class Session(metaclass=SessionMeta):
     """    
     process_id = os.getpid()
     hostname = socket.gethostname()
-    database = None # type: core.database.server.Server
+    database = None  # type: core.database.server.Server
     db_id = None
     connected = False
-    
+
+    timezone = None  # type: timezone
     language_code = ''
     id = ''
     type = '' 
@@ -78,7 +82,7 @@ class Session(metaclass=SessionMeta):
     address = ''
     user_id = ''
     authenticated = False
-    objects = {} # type: Dict[str, core.object.unit]
+    objects = {}  # type: Dict[str, core.object.unit]
 
     @staticmethod
     def start():

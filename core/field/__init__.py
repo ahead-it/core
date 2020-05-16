@@ -7,3 +7,4 @@ from core.field.decimal import Decimal
 from core.field.integer import Integer
 from core.field.option import Option
 from core.field.text import Text
+from core.field.field import Field

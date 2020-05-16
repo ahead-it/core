@@ -1,5 +1,6 @@
 from typing import List
 from datetime import datetime, date, time
+import dateutil.tz
 import pyodbc
 import core.database.server
 import core.object.option
@@ -261,8 +262,7 @@ class SqlServer(core.database.server.Server):
             if value == datetime(1753, 1, 1):
                 res = None
             else:
-                UTC_DELTA = datetime.utcnow() - datetime.now()
-                res = value - UTC_DELTA
+                res = value.astimezone(core.session.Session.timezone)
 
         elif field.type == FieldType.DATE:
             if value == date(1753, 1, 1):
@@ -287,8 +287,7 @@ class SqlServer(core.database.server.Server):
             if value is None:
                 res = date(1753, 1, 1)
             else:
-                UTC_DELTA = datetime.utcnow() - datetime.now()
-                res = value + UTC_DELTA
+                res = value.astimezone(dateutil.tz.UTC)
 
         elif field.type == FieldType.DATE:
             if value is None:

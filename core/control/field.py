@@ -19,16 +19,16 @@ class Field(Control):
     """    
     def __init__(self, parent, field):
         super().__init__(parent)
-        self.field = field # type: core.field.field.Field
+        self.field = field  # type: core.field.field.Field
         self.type = FieldType.DEFAULT
         self.caption = field.caption
         self.enabled = True
-        self.visble = True
+        self.visible = True
 
     def _onrender(self, obj):
         obj['caption'] = self.caption
         obj['codename'] = self.field._codename
-        obj['controltype'] = FieldType.name(self.type)
+        obj['controltype'] = self.type
         obj['datatype'] = core.field.field.FieldType.name(self.field.type)
         obj['enabled'] = self.enabled
         obj['visible'] = self.visible
@@ -64,6 +64,8 @@ class Field(Control):
         """
         if parsevalue:
             value = self.field.evaluate(value)
+        else:
+            value = self.field.deserialize(value)
         
         self.field.validate(value)
 

@@ -2,6 +2,7 @@ import multiprocessing
 import os
 import importlib
 import inspect
+from datetime import datetime
 from typing import Dict
 import json
 from core.session import Session
@@ -124,7 +125,7 @@ class Application:
         if not severity in ['E', 'W', 'I', 'D']:
             severity = 'E'
 
-        line = Convert.formatdatetime1()
+        line = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
         line += ' ' + severity
         line += ' ' + context
         line += ' ' + Session.type

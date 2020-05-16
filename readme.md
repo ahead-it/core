@@ -16,6 +16,7 @@ Core requirements:
 * [Pylint](https://www.pylint.org/) for code check
 * [Poedit](https://poedit.net/) for translations
 * [Watchdog](https://pythonhosted.org/watchdog/) for reload on the fly changed files
+* [dateutil](https://github.com/dateutil/dateutil/) for handling timezone 
 
 Windows requirements:
 * [six](https://pypi.org/project/six/) for compatibility

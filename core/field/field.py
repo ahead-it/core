@@ -188,7 +188,7 @@ class Field:
         Serialize value
         """
         return value
-    
+
     def deserialize(self, value):
         """
         Deserialize value

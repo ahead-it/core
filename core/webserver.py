@@ -1,6 +1,7 @@
 import os
 import socket
 import asyncio
+from datetime import datetime
 import tornado.web
 import tornado.httpserver
 import tornado.websocket
@@ -32,7 +33,7 @@ def _write_accesslog(handler):
          core.application.Application.instance['name'] + '.webserver-' + Convert.formatdatetime2() + '.log'
     try:
         fs = open(fn, 'a')
-        fs.write(Convert.formatdatetime1() + " " +
+        fs.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f') + " " +
                  handler.request.method + " " +
                  handler.request.uri + " " +
                  handler.request.remote_ip + " " +

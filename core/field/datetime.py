@@ -3,7 +3,7 @@ from core.utility.convert import Convert
 from core.field.field import Field, FieldType
 from core.utility.system import error
 from core.language import label
-
+import core.session
 
 class DateTime(Field):
     """
@@ -25,6 +25,17 @@ class DateTime(Field):
             error(label('Value \'{0}\' is not valid for \'{1}\''.format(value, self.caption)))
             
         return value
-        
+
     def serialize(self, value):
-        return Convert.formatdatetime3(value)
+        if value is None:
+            return None
+        else:
+            if value.tzinfo is None:
+                value = value.astimezone(core.session.Session.timezone)
+            return value.strftime('%Y-%m-%d %H:%M:%S.%f%z')
+
+    def deserialize(self, value):
+        if value is None:
+            return None
+        else:
+            return datetime.strptime(value, '%Y-%m-%d %H:%M:%S.%f%z')

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from core.utility.convert import Convert
 from core.field.field import Field, FieldType
 from core.utility.system import error
@@ -25,6 +25,15 @@ class Date(Field):
             error(label('Value \'{0}\' is not valid for \'{1}\''.format(value, self.caption)))
             
         return value
-        
+
     def serialize(self, value):
-        return Convert.formatdatetime2(value)        
+        if value is None:
+            return None
+        else:
+            return value.strftime('%Y-%m-%d')
+
+    def deserialize(self, value):
+        if value is None:
+            return None
+        else:
+            return datetime.strptime(value, '%Y-%m-%d').date()
