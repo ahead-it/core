@@ -30,9 +30,9 @@ class SessionMeta(type):
     """
     Wraps SessionData for static object Session
     """
-    def __init__(self, name, bases, dct):
+    def __init__(cls, name, bases, dct):
         super().__init__(name, bases, dct)
-        self.data = SessionData()
+        cls.data = SessionData()
 
     def __getattribute__(self, attr):
         if attr != 'data':

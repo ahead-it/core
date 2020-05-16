@@ -4,6 +4,15 @@ from core.object.option import Option
 from core.language import label
 
 
+class FilterLevels:
+    """
+    Defines standard filter levels
+    """
+    PUBLIC = 0
+    PRIVATE = 2
+    RELATIONS = 4
+
+
 class FieldType(Option):
     """
     Defines the types of field supported by the application
@@ -20,7 +29,7 @@ class FieldType(Option):
     BOOLEAN = 9, label('Boolean')
 
 
-class FieldFilter():
+class FieldFilter:
     """
     Filter implementation
     """
@@ -32,7 +41,7 @@ class FieldFilter():
         self.value = None
         self.values = []
         self.expression = ''
-        self.field = None # type: Field
+        self.field = None  # type: Field
 
         self._leftnam = ''
         self._leftval = None
@@ -99,7 +108,7 @@ class FieldFilter():
         return sql
 
 
-class Field():
+class Field:
     """
     Base field implementation
     """
@@ -177,6 +186,12 @@ class Field():
     def serialize(self, value):
         """
         Serialize value
+        """
+        return value
+    
+    def deserialize(self, value):
+        """
+        Deserialize value
         """
         return value
 
@@ -265,11 +280,11 @@ class Field():
         flt.field = self
         self.filters.append(flt)
 
-    def setrange(self, min=None, max=None):
+    def setrange(self, minvalue=None, maxvalue=None):
         """
         Add or remove a simple filter to the field
         """
-        if (min is None) and (max is None):
+        if (minvalue is None) and (maxvalue is None):
             fd = []
             for f in self.filters:
                 if f.level == self._getfilterlevel:
@@ -277,11 +292,11 @@ class Field():
             for f in fd:
                 self.filters.remove(f)
 
-        elif max is None:
+        elif maxvalue is None:
             flt = FieldFilter()
             flt.type = 'equal'
             flt.level = self._getfilterlevel()
-            flt.value = min
+            flt.value = minvalue
             flt.field = self
             self.filters.append(flt)
 
@@ -289,7 +304,7 @@ class Field():
             flt = FieldFilter()
             flt.type = 'range'
             flt.level = self._getfilterlevel()
-            flt.min_value = min
-            flt.max_value = max
+            flt.min_value = minvalue
+            flt.max_value = maxvalue
             flt.field = self
             self.filters.append(flt)

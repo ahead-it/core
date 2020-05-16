@@ -57,13 +57,13 @@ class ReloaderHandler(FileSystemEventHandler):
 
             sha = hashlib.sha1()
             sha.update(content)
-            hash = sha.hexdigest()
+            strhash = sha.hexdigest()
 
             if modname in self.hashes:
-                if self.hashes[modname] == hash:
+                if self.hashes[modname] == strhash:
                     return
 
-            self.hashes[modname] = hash
+            self.hashes[modname] = strhash
             
             core.application.Application.log('reloader', 'I', 'Reloading module \'{0}\''.format(modname))
             core.application.Application.process_pool.notify_reload(modname)
@@ -72,7 +72,7 @@ class ReloaderHandler(FileSystemEventHandler):
             core.application.Application.logexception('reloader')
 
 
-class Reloader():
+class Reloader:
     _observer = None
 
     @staticmethod

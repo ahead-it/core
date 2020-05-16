@@ -75,7 +75,7 @@ class Unit:
                 
                 state[keys[i]][m] = attr
 
-        return (Unit._restore, (state, ))
+        return Unit._restore, (state, )
 
     @staticmethod
     def _restore(args):

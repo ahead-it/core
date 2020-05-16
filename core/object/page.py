@@ -1,9 +1,11 @@
 from typing import List, Dict, Callable, Optional
 from core.object.unit import Unit
 from core.object.unit import UnitType
+from core.field import field
 from core.control.control import Control
 from core.control.contentarea import ContentArea
 from core.control.actions import ActionArea, Action
+from core.control.icon import Icon
 from core.utility.client import Client
 from core.language import label
 from core.utility.system import error
@@ -19,7 +21,7 @@ class Page(Unit):
         super().__init__()
         self._type = UnitType.PAGE
         self._controls = []  # type: List[Control]
-        self._allcontrols = {} # type: Dict[str, Control]
+        self._allcontrols = {}  # type: Dict[str, Control]
         self._dataset = []
         self._selectedrows = [] 
         self._count = None
@@ -27,10 +29,10 @@ class Page(Unit):
         self._modifyallowed = True
         self._deleteallowed = True
         self._readonly = False
-        self._cardPage: Callable[[], Page] 
+        self._cardPage = None  # type: Callable[[], Page]
             
-        self.rec: core.object.table.Table 
-        
+        self.rec = None  # type: core.object.table.Table
+
         self._init()
         self._init_check()
         self._add_defaultactions()
@@ -49,6 +51,18 @@ class Page(Unit):
         obj = self._render()
         obj['action'] = 'page'
         Client.send(obj)
+
+    def setcaption(self, newcaption):
+        """
+        Change the caption at runtime
+        """
+        msg = {
+            'action': 'changectlprop',
+            'pageid': self._id,
+            'property': 'caption',
+            'value': newcaption
+        }
+        Client.send(msg)
 
     def update(self):
         """
@@ -132,6 +146,18 @@ class Page(Unit):
                 'codename': f._codename,
                 'type': f.__class__.__name__
             }
+
+            if f.type == field.FieldType.OPTION:
+                itm['options'] = []
+                opts = f._optclass.options()
+                for v in opts:
+                    capt = opts[v]
+                    if capt:
+                        itm['options'].append({
+                            'value': v,
+                            'caption': capt
+                        })
+
             schema.append(itm)
 
         return schema
@@ -158,20 +184,20 @@ class Page(Unit):
         if actArea is None:
             actArea = ActionArea(contArea)
 
-        recbtn = Action(actArea, label('Record'), 'record', category='record')
+        recbtn = Action(actArea, label('Record'), Icon.DATA, category='record')
         recbtn.move_first()
 
         if (not self._readonly) and self.rec:
             if self._insertallowed:
-                self._newbtn = Action(recbtn, label('New'), 'new')
+                self._newbtn = Action(recbtn, label('New'), Icon.NEW)
 
             if self._modifyallowed:
-                self._modbtn = Action(recbtn, label('Modify'), 'modify') 
+                self._modbtn = Action(recbtn, label('Modify'), Icon.EDIT)
 
             if self._deleteallowed:
-                self._delbtn = Action(recbtn, label('Delete'), 'delete') 
+                self._delbtn = Action(recbtn, label('Delete'), Icon.DELETE)
 
-        self._refbtn = Action(recbtn, label('Refresh'), 'refresh')            
+        self._refbtn = Action(recbtn, label('Refresh'), Icon.REFRESH)
 
     def _refbtn_click(self):
         """
@@ -184,7 +210,7 @@ class Page(Unit):
         New button
         """
         if self._cardPage:
-            card = self._cardPage.__class__()
+            card = self._cardPage()
             card.rec.init()
             card.run()
 
@@ -196,7 +222,7 @@ class Page(Unit):
             return
 
         if self._cardPage:
-            card = self._cardPage.__class__()
+            card = self._cardPage()
             card.rec.setpkfilter(*self._getrowpk(self._selectedrows[0]))
             card.run()   
 

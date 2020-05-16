@@ -6,26 +6,26 @@ class OptionMeta(type):
     """
     Metaclass for option
     """
-    def __init__(self, name, bases, dct):
+    def __init__(cls, name, bases, dct):
         super().__init__(name, bases, dct)
-        self._captions = {}
-        self._options = {}
-        self._modules = {}
+        cls._captions = {}
+        cls._options = {}
+        cls._modules = {}
 
-        for k in self.__dict__:
+        for k in cls.__dict__:
             if k.startswith('_'):
                 continue
         
-            t = self.__dict__[k]
+            t = cls.__dict__[k]
             if isinstance(t, tuple) and (len(t) >= 2) and isinstance(t[0], int) and isinstance(t[1], str):
                 v = t[0]
-                self._captions[v] = t[1]
-                self._options[v] = k
+                cls._captions[v] = t[1]
+                cls._options[v] = k
                 if len(t) == 3:
-                    self._modules[v] = t[2]
+                    cls._modules[v] = t[2]
                 else:
-                    self._modules[v] = core.utility.system.System.get_caller_modulename()
-                setattr(self, k, v)
+                    cls._modules[v] = core.utility.system.System.get_caller_modulename()
+                setattr(cls, k, v)
  
 
 class Option(metaclass=OptionMeta):

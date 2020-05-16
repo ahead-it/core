@@ -5,7 +5,7 @@ import core.session
 import core.application
 
 
-class Server():
+class Server:
     """
     Defines a generic server class for database
     """

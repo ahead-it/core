@@ -3,13 +3,13 @@ from typing import List
 import core.object.page
 
 
-class Control():
+class Control:
     """
     Implements a generic user control
     """    
     def __init__(self, parent):
         self._parent = parent
-        self._page = None # type: core.object.page.Page
+        self._page = None  # type: core.object.page.Page
         self._codename = ''        
         self.id = str(uuid.uuid4())
         self._controls = []  # type: List[Control]

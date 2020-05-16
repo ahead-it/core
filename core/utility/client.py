@@ -11,7 +11,7 @@ class ClientNotSupportedException(Exception):
         super().__init__(label('Client \'{0}\' not supported'.format(core.session.Session.type)))
 
 
-class Client():
+class Client:
     """
     Contains utility specific for the client
     """

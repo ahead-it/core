@@ -17,6 +17,7 @@ class Option(Field):
         self.caption = caption
         self.sqlname = Convert.to_sqlname(self.name)
         self._testvalue = 0
+        self._optclass = optclass
 
         if not issubclass(optclass, core.object.option.Option):
             error(label('Invalid option class \'{0}\''.format(optclass)))

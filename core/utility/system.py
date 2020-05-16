@@ -3,7 +3,7 @@ import core.application
 import core.session
 
 
-class System():
+class System:
     """
     Contains utility specific to Core system
     """

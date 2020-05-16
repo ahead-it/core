@@ -5,12 +5,12 @@ from core.language import label
 from core.control.control import Control
 
 
-class FieldType(Option):
+class FieldType:
     """
     Defines the types of page field supported by the application
     """
-    DEFAULT = 0, label('Default')
-    PASSWORD = 1, label('Password')
+    DEFAULT = 'default'
+    PASSWORD = 'password'
 
 
 class Field(Control):
@@ -22,13 +22,17 @@ class Field(Control):
         self.field = field # type: core.field.field.Field
         self.type = FieldType.DEFAULT
         self.caption = field.caption
+        self.enabled = True
+        self.visble = True
 
     def _onrender(self, obj):
         obj['caption'] = self.caption
         obj['codename'] = self.field._codename
         obj['controltype'] = FieldType.name(self.type)
         obj['datatype'] = core.field.field.FieldType.name(self.field.type)
-
+        obj['enabled'] = self.enabled
+        obj['visible'] = self.visible
+        
         if self.field._relations:
             obj['hasrelations'] = True
 

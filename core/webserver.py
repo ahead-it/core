@@ -82,7 +82,7 @@ class RpcHandler(tornado.web.RequestHandler):
     async def post(self, path):
         await self._handle('POST', path)
 
-    async def options(self, path):
+    def options(self, path):
         self._set_headers()
         self.set_status(204)        
         self.finish()
@@ -448,7 +448,7 @@ class WebServer:
             f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, k))
             f.close()
 
-        return (fnc, fnk)
+        return fnc, fnk
         
     @staticmethod
     def get_authtoken(handler: tornado.web.RequestHandler):

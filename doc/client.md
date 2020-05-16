@@ -325,7 +325,7 @@ Each page is bound to a dataset. Dataset comes from database tables.
 
 ```json
 ...
-  "dataset": [
+  "schema": [
     {
       "caption": "ID",
       "codename": "id",
@@ -412,3 +412,9 @@ Each field control is bound to the dataset through `codename`.
 ...
 ```
 
+## Messages
+Server can send several message to client:
+* `disconnect` to close socket and restart
+* `refreshpage` to reload page dataset
+* `closepage` to close the page
+* `changectlprop` to change page control property at runtime
