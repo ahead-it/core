@@ -74,7 +74,10 @@ class Field(Control):
                 self._page.rec.insert(True)
 
                 self._page._dataset.append(self._page._getdatarow(self._page.rec))
-                self._page._currentrow = len(self._page._dataset) - 1
+                self._page._selectedrows = [len(self._page._dataset) - 1]
+                
+                if not self._page._islist:
+                    self._page.rec.setpkfilter(*self._page._getrowpk(self._page._selectedrows[0]))
 
             else:
                 self._page.rec.modify(True)

@@ -13,13 +13,13 @@ class Control:
         self._codename = ''        
         self.id = str(uuid.uuid4())
         self._controls = []  # type: List[Control]
-        
+
         if issubclass(type(parent), core.object.page.Page):
-            self._page = parent
+            self._page = parent  # type: core.object.page.Page
             self._parent._controls.append(self)
 
         elif issubclass(type(parent), Control):
-            self._page = parent._page
+            self._page = parent._page  # type: core.object.page.Page
             self._parent._controls.append(self)
 
         if self._page is not None:

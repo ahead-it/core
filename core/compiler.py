@@ -161,7 +161,7 @@ class Merger:
                     if p > 0:
                         qn = qn[0:p-1]    
 
-                    init += '        self.' + m + ' = None # type: ' + type(attr).__module__ + '.' + qn + '\n'
+                    init += '        self.' + m + ' = None  # type: ' + type(attr).__module__ + '.' + qn + '\n'
 
                     if not type(attr).__module__ in imports:
                         imports.append(type(attr).__module__)  

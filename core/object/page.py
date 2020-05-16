@@ -29,7 +29,9 @@ class Page(Unit):
         self._modifyallowed = True
         self._deleteallowed = True
         self._readonly = False
-        self._cardPage = None  # type: Callable[[], Page]
+        self._islist = False
+        self._opennew = False
+        self._cardpage = None  # type: Callable[[], Page]
             
         self.rec = None  # type: core.object.table.Table
 
@@ -166,32 +168,32 @@ class Page(Unit):
         """
         Add default action to page
         """
-        contArea = None
+        cont_area = None
         for c in self._controls:
             if isinstance(c, ContentArea):
-                contArea = c
+                cont_area = c
                 break
 
-        if contArea is None:
+        if cont_area is None:
             return
 
-        actArea = None
-        for c in contArea._controls:
+        act_area = None
+        for c in cont_area._controls:
             if isinstance(c, ActionArea):
-                actArea = c
+                act_area = c
                 break
 
-        if actArea is None:
-            actArea = ActionArea(contArea)
+        if act_area is None:
+            act_area = ActionArea(cont_area)
 
-        recbtn = Action(actArea, label('Record'), Icon.DATA, category='record')
+        recbtn = Action(act_area, label('Record'), Icon.DATA, category='record')
         recbtn.move_first()
 
         if (not self._readonly) and self.rec:
-            if self._insertallowed:
+            if self._insertallowed and (not self._islist):
                 self._newbtn = Action(recbtn, label('New'), Icon.NEW)
 
-            if self._modifyallowed:
+            if self._modifyallowed and (not self._islist):
                 self._modbtn = Action(recbtn, label('Modify'), Icon.EDIT)
 
             if self._deleteallowed:
@@ -209,9 +211,9 @@ class Page(Unit):
         """
         New button
         """
-        if self._cardPage:
-            card = self._cardPage()
-            card.rec.init()
+        if self._cardpage:
+            card = self._cardpage()
+            card._opennew = True
             card.run()
 
     def _modbtn_click(self):
@@ -221,8 +223,8 @@ class Page(Unit):
         if not self._selectedrows:
             return
 
-        if self._cardPage:
-            card = self._cardPage()
+        if self._cardpage:
+            card = self._cardpage()
             card.rec.setpkfilter(*self._getrowpk(self._selectedrows[0]))
             card.run()   
 
@@ -274,13 +276,21 @@ class Page(Unit):
 
         if self.rec is not None:
             if offset == 0:
-                self._count = self.rec.count()
+                if self._islist:
+                    self._count = self.rec.count()
+                else:
+                    self._count = 1
 
-            if self.rec._findset(size=limit, offset=offset):
-                while (limit > 0) and self.rec.read():
-                    self._dataset.append(self._getdatarow(self.rec))
+            if self._opennew and (self.rec._rowversion is None):
+                self.rec.init()
+                self._dataset.append(self._getdatarow(self.rec))
 
-                    limit -= 1
+            else:
+                if self.rec._findset(size=limit, offset=offset):
+                    while (limit > 0) and self.rec.read():
+                        self._dataset.append(self._getdatarow(self.rec))
+
+                        limit -= 1
 
         else:
             self._count = 1
