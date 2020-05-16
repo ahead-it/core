@@ -18,6 +18,7 @@ class DateTime(Field):
         self.value = None
         self.initvalue = None
         self.xvalue = None
+        self._testvalue = None
 
     def checkvalue(self, value):
         if (value is not None) and (not isinstance(value, datetime)):

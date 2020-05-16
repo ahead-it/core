@@ -124,7 +124,12 @@ It's the simplest control that accepts data input. It's rendered differently acc
 ![](img/ctl_field.png)
 
 Available methods:
-* `validate(value, parsevalue)`
+* `validate(value, parsevalue)` validate value in the field and writes it to the database; if "parsevalue" is true value is converted from string
+* `getrelated(value)` get related values from tablerelation
 
 Available properties:
 * `caption`
+* `codename`
+* `controltype`
+* `datatype`
+* `hasrelations`

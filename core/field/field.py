@@ -107,6 +107,7 @@ class Field():
         self._codename = ''
         self._parent = None
         self._relations = []
+        self._testvalue = None
         self.name = ''
         self.caption = ''
         self.sqlname = ''
@@ -188,6 +189,24 @@ class Field():
         if self._parent and hasattr(self._parent, m):
             a = getattr(self._parent, m)
             a()
+
+    def test(self, expected=None):
+        """
+        Test field content
+        """
+        if expected is None:
+            if self.value == self._testvalue:
+                raise Exception('{0} must have a value'.format(self.caption))
+
+        else:
+            if self.value != expected:
+                self.error()
+
+    def error(self):
+        """
+        Raise an error for current value
+        """
+        raise Exception('{0} value cannot be {1}'.format(self.caption, self.value))
 
     def _getrelation(self):
         """

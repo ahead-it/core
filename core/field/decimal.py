@@ -16,6 +16,7 @@ class Decimal(Field):
         self.value = decimal.Decimal(0)
         self.initvalue = self.value
         self.xvalue = self.value
+        self._testvalue = self.value
 
     def checkvalue(self, value):
         if isinstance(value, float):

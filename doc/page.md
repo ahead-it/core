@@ -31,12 +31,15 @@ When a control is added as member of the page, it's possible to define its speci
 Following triggers are raised:
 
 * `_onopen` before the page is shown
+* `_onqueryclose` before the page is closed (return False to cancel)
+* `_onclose` after the page is closed
 
 ## Magic methods
 * `_ctlinvoke(controlid, method, args)` invoke specified method in the control identified by ID passing arguments
 * `_getdata(offset, limit, sorting, filters)` returns data limited to specified rows, with sorting and filters applied
 * `_selectrows(rows)` select rows in the dataset (empty array for new rows)
 * `_delete()` delete selected rows
+* `_close(mandatory)` closes gracefully or not the page
 
 ## Controls
 Core defines several widgets that are rendered by the client in the proper way (web, mobile client, desktop client...).

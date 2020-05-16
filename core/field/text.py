@@ -18,6 +18,7 @@ class Text(Field):
         self.value = ''
         self.initvalue = ''
         self.xvalue = ''
+        self._testvalue = ''
 
     def checkvalue(self, value):
         if len(value) > self.length:

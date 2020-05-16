@@ -15,6 +15,7 @@ class Integer(Field):
         self.value = 0
         self.initvalue = 0
         self.xvalue = 0
+        self._testvalue = 0
         self.autoincrement = False
 
     def checkvalue(self, value):

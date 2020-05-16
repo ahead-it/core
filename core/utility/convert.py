@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import sys
 import traceback
 import core.application
+from core.language import label
 
 
 class RemoteError(Exception):
@@ -105,4 +106,4 @@ class Convert():
             'message': str(exc[1]),
             'trace': traces
         }
-        
+       

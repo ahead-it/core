@@ -18,6 +18,7 @@ class Code(Field):
         self.value = ''
         self.initvalue = ''
         self.xvalue = ''
+        self._testvalue = ''
 
     def checkvalue(self, value):
         value = value.strip()

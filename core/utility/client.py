@@ -85,5 +85,16 @@ class Client():
             'title': title
         }
 
-        return Client.sendrecv(msg)        
+        return Client.sendrecv(msg)      
+
+    @staticmethod
+    def disconnect():
+        """
+        Force the client to disconnect
+        """
+        msg = {
+            'action': 'disconnect'
+        }
+
+        Client.send(msg)  
  

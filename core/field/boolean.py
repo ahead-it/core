@@ -16,6 +16,7 @@ class Boolean(Field):
         self.value = False
         self.initvalue = False
         self.xvalue = False
+        self._testvalue = False
 
     def checkvalue(self, value):
         if isinstance(value, str):

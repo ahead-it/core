@@ -1,4 +1,4 @@
-from typing import List, Dict, Callable
+from typing import List, Dict, Callable, Optional
 from core.object.unit import Unit
 from core.object.unit import UnitType
 from core.control.control import Control
@@ -27,9 +27,9 @@ class Page(Unit):
         self._modifyallowed = True
         self._deleteallowed = True
         self._readonly = False
-        self._cardPage = None # type: Callable[[], Page]
-        
-        self.rec = None # type: core.object.table.Table
+        self._cardPage: Callable[[], Page] 
+            
+        self.rec: core.object.table.Table 
         
         self._init()
         self._init_check()
@@ -55,7 +55,7 @@ class Page(Unit):
         Refresh data in the client
         """
         msg = {
-            'action': 'refresh',
+            'action': 'refreshpage',
             'pageid': self._id,
         }
         Client.send(msg)
@@ -80,7 +80,7 @@ class Page(Unit):
             return
 
         msg = {
-            'action': 'close',
+            'action': 'closepage',
             'pageid': self._id,
         }
         Client.send(msg)    
@@ -157,9 +157,9 @@ class Page(Unit):
 
         if actArea is None:
             actArea = ActionArea(contArea)
-            actArea.move_first()
 
         recbtn = Action(actArea, label('Record'), 'record', category='record')
+        recbtn.move_first()
 
         if (not self._readonly) and self.rec:
             if self._insertallowed:
@@ -167,6 +167,9 @@ class Page(Unit):
 
             if self._modifyallowed:
                 self._modbtn = Action(recbtn, label('Modify'), 'modify') 
+
+            if self._deleteallowed:
+                self._delbtn = Action(recbtn, label('Delete'), 'delete') 
 
         self._refbtn = Action(recbtn, label('Refresh'), 'refresh')            
 
@@ -181,7 +184,7 @@ class Page(Unit):
         New button
         """
         if self._cardPage:
-            card = self._cardPage()
+            card = self._cardPage.__class__()
             card.rec.init()
             card.run()
 
@@ -193,9 +196,15 @@ class Page(Unit):
             return
 
         if self._cardPage:
-            card = self._cardPage()
+            card = self._cardPage.__class__()
             card.rec.setpkfilter(*self._getrowpk(self._selectedrows[0]))
-            card.run()            
+            card.run()   
+
+    def _delbtn_click(self):
+        """
+        Delete button
+        """
+        self._delete()         
 
     def _getdatarow(self, rec):
         """
@@ -223,7 +232,13 @@ class Page(Unit):
             self.rec.get(*self._getrowpk(i))
             self.rec.delete(True)
 
+        newds = []
+        for i in self._dataset:
+            if i not in self._selectedrows:
+                newds.append(self._dataset[i])
+
         self._selectedrows = []
+        self._dataset = newds
 
     def _getdata(self, offset=0, limit=1, sorting=None, filters=None):
         """
