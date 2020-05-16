@@ -26,3 +26,6 @@ class Decimal(Field):
 
     def serialize(self, value):
         return str(value)
+
+    def deserialize(self, value):
+        return decimal.Decimal(value)

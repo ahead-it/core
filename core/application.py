@@ -146,7 +146,7 @@ class Application:
             dn = 'application'
             if Application.instance:
                 dn = Application.instance['name']
-            fn = Application.base_path + 'var/log/' + dn + '-' + Convert.formatdatetime2() + '.log'
+            fn = Application.base_path + 'var/log/' + dn + '-' + datetime.now().strftime('%Y%m%d') + '.log'
             f = open(fn, "a")
             f.write(line + '\n')
             f.close()    

@@ -27,6 +27,7 @@ class FieldType(Option):
     DATE = 7, label('Date')
     DATETIME = 8, label('DateTime')
     BOOLEAN = 9, label('Boolean')
+    TIME = 10, label('Time')
 
 
 class FieldFilter:

@@ -112,7 +112,7 @@ class SqlServer(core.database.server.Server):
             res += 'decimal(38,20)'
             res += ' NOT NULL'  
 
-        elif field.type in [FieldType.DATE, FieldType.DATETIME]:
+        elif field.type in [FieldType.DATE, FieldType.DATETIME, FieldType.TIME]:
             res += 'datetime'
             res += ' NOT NULL'    
 
@@ -184,7 +184,7 @@ class SqlServer(core.database.server.Server):
                     sql += '\'\''
                 elif field.type in [FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.DECIMAL, FieldType.OPTION, FieldType.BOOLEAN]:
                     sql += '0'
-                elif field.type in [FieldType.DATE, FieldType.DATETIME]:
+                elif field.type in [FieldType.DATE, FieldType.DATETIME, FieldType.TIME]:
                     sql += '\'17530101\''                    
                 self.execute(sql)
 
@@ -270,6 +270,12 @@ class SqlServer(core.database.server.Server):
             else:
                 res = value.date()
 
+        elif field.type == FieldType.TIME:
+            if value == date(1753, 1, 1):
+                res = None
+            else:
+                res = value.time()
+
         else:
             raise Exception(label('Unknown field type \'{0}\''.format(field.type[1])))
 
@@ -294,6 +300,12 @@ class SqlServer(core.database.server.Server):
                 res = date(1753, 1, 1)
             else:
                 res = datetime.combine(value, time(0, 0, 0))
+
+        elif field.type == FieldType.TIME:
+            if value is None:
+                res = date(1753, 1, 1)
+            else:
+                res = datetime.combine(date(1753, 1, 1), value)
 
         else:
             raise Exception(label('Unknown field type \'{0}\''.format(field.type[1])))

@@ -116,7 +116,7 @@ if not cust.isempty():
 To filter for a custom expression:
 ```python
 cust = Customer()
-cust.name.setfiler('John|*ike*|{0}', 'Bill')
+cust.name.setfilter('John|*ike*|{0}', 'Bill')
 if cust.findfirst():
     print(label('Customer \'{0}\' found'.format(cust.name.value)))
 ```

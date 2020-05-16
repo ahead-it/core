@@ -30,7 +30,7 @@ def _write_accesslog(handler):
         cl = handler._headers["Content-Length"]
 
     fn = core.application.Application.base_path + 'var/log/' +\
-         core.application.Application.instance['name'] + '.webserver-' + Convert.formatdatetime2() + '.log'
+         core.application.Application.instance['name'] + '.webserver-' + datetime.now().strftime('%Y%m%d') + '.log'
     try:
         fs = open(fn, 'a')
         fs.write(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f') + " " +
