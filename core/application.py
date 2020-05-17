@@ -12,6 +12,7 @@ import core.language
 import core.object.table
 import core.webserver
 from core.utility.convert import Convert
+import core.utility.proxy
 import core.process
 
 
@@ -202,6 +203,9 @@ class Application:
         Start servers and process pools
         """
         try:
+            Session.connect()
+            core.utility.proxy.Proxy.su_invoke('app.codeunit.SessionManagement', 'server_start')
+
             Application.process_pool = core.process.ProcessPool(Application.instance['min_processes'], Application.instance['max_processes'])
             Application.process_pool.start()
 

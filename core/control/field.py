@@ -49,6 +49,8 @@ class Field(Control):
 
             schema = self._page._getschema(tab)
 
+            # FIXME filter by value
+
             if tab.findset():
                 while tab.read():
                     dataset.append(self._page._getdatarow(tab))
