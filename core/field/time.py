@@ -19,6 +19,7 @@ class Time(Field):
         self.initvalue = None
         self.xvalue = None
         self._testvalue = None
+        self._hasformat = True
 
     def checkvalue(self, value):
         if (value is not None) and (not isinstance(value, time)):
@@ -37,3 +38,15 @@ class Time(Field):
             return None
         else:
             return datetime.strptime(value, '%H:%M:%S').time()
+
+    def format(self, value):
+        if value is None:
+            return ''
+        else:
+            return value.strftime('%H:%M:%S')
+
+    def evaluate(self, strval):
+        try:
+            return Convert.strtotime(strval)
+        except:
+            raise Exception('Value \'{0}\' is not valid for \'{1}\''.format(strval, self.caption))

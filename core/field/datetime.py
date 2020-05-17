@@ -19,6 +19,7 @@ class DateTime(Field):
         self.initvalue = None
         self.xvalue = None
         self._testvalue = None
+        self._hasformat = True
 
     def checkvalue(self, value):
         if (value is not None) and (not isinstance(value, datetime)):
@@ -39,3 +40,15 @@ class DateTime(Field):
             return None
         else:
             return datetime.strptime(value, '%Y-%m-%d %H:%M:%S.%f%z')
+
+    def format(self, value):
+        if value is None:
+            return ''
+        else:
+            return value.strftime('%d/%m/%Y %H:%M:%S')
+
+    def evaluate(self, strval):
+        try:
+            return Convert.strtodatetime(strval)
+        except:
+            raise Exception('Value \'{0}\' is not valid for \'{1}\''.format(strval, self.caption))

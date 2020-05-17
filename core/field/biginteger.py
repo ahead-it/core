@@ -17,7 +17,19 @@ class BigInteger(Field):
         self.xvalue = 0
         self._testvalue = 0
         self.autoincrement = False
+        self.blankzero = False
+        self._hasformat = True
 
     def checkvalue(self, value):
         return int(value)
+
+    def format(self, value):
+        if self.blankzero and (value == 0):
+            return ''
+        else:
+            return str(value)
+
+    def evaluate(self, strval):
+        return int(strval)
+
         

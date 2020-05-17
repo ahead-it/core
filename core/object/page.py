@@ -4,7 +4,7 @@ from core.object.unit import UnitType
 from core.field import field
 from core.control.control import Control
 from core.control.contentarea import ContentArea
-from core.control.actions import ActionArea, Action
+from core.control.actions import ActionArea, Action, ActionCategory
 from core.control.icon import Icon
 from core.utility.client import Client
 from core.language import label
@@ -23,6 +23,7 @@ class Page(Unit):
         self._controls = []  # type: List[Control]
         self._allcontrols = {}  # type: Dict[str, Control]
         self._dataset = []
+        self._fdataset = []
         self._selectedrows = [] 
         self._count = None
         self._insertallowed = True
@@ -146,14 +147,14 @@ class Page(Unit):
             itm = {
                 'caption': f.caption,
                 'codename': f._codename,
-                'type': f.__class__.__name__
+                'type': f.__class__.__name__,
+                'hasformat': f._hasformat
             }
 
             if f.type == field.FieldType.OPTION:
                 itm['options'] = []
-                opts = f._optclass.options()
-                for v in opts:
-                    capt = opts[v]
+                for v in f._options:
+                    capt = f._options[v]
                     if capt:
                         itm['options'].append({
                             'value': v,
@@ -186,7 +187,7 @@ class Page(Unit):
         if act_area is None:
             act_area = ActionArea(cont_area)
 
-        recbtn = Action(act_area, label('Record'), Icon.DATA, category='record')
+        recbtn = Action(act_area, label('Record'), Icon.DATA, ActionCategory.RECORD)
         recbtn.move_first()
 
         if (not self._readonly) and self.rec:
@@ -234,13 +235,20 @@ class Page(Unit):
         """
         self._delete()         
 
-    def _getdatarow(self, rec):
+    def _getdatarow(self, rec, format=False):
         """
         Returns current data row
         """
         line = []
         for f in rec._fields:
-            line.append(f.serialize(f.value))
+            if format:
+                if f._hasformat:
+                    line.append(f.format(f.value))
+                else:
+                    line.append('')
+            else:
+                line.append(f.serialize(f.value))
+
         return line
     
     def _delete(self):
@@ -261,18 +269,22 @@ class Page(Unit):
             self.rec.delete(True)
 
         newds = []
+        newfds = []
         for i in self._dataset:
             if i not in self._selectedrows:
                 newds.append(self._dataset[i])
+                newfds.append(self._fdataset[i])
 
         self._selectedrows = []
         self._dataset = newds
+        self._fdataset = newfds
 
     def _getdata(self, offset=0, limit=1, sorting=None, filters=None):
         """
         Returns data
         """
         self._dataset = []
+        self._fdataset = []
 
         if self.rec is not None:
             if offset == 0:
@@ -284,11 +296,13 @@ class Page(Unit):
             if self._opennew and (self.rec._rowversion is None):
                 self.rec.init()
                 self._dataset.append(self._getdatarow(self.rec))
+                self._fdataset.append(self._getdatarow(self.rec, True))
 
             else:
                 if self.rec._findset(size=limit, offset=offset):
                     while (limit > 0) and self.rec.read():
                         self._dataset.append(self._getdatarow(self.rec))
+                        self._fdataset.append(self._getdatarow(self.rec, True))
 
                         limit -= 1
 
@@ -297,6 +311,7 @@ class Page(Unit):
 
         return {
             'dataset': self._dataset,
+            'fdataset': self._fdataset,
             'count': self._count
         }
 

@@ -329,37 +329,45 @@ Each page is bound to a dataset. Dataset comes from database tables.
     {
       "caption": "ID",
       "codename": "id",
-      "type": "Code"
+      "type": "Code",
+      "hasformat": false
     },
     {
       "caption": "Name",
       "codename": "name",
-      "type": "Text"
+      "type": "Text",
+      "hasformat": false
     },
     {
       "caption": "E-Mail",
       "codename": "email",
-      "type": "Code"
+      "type": "Code",
+      "hasformat": false
     },
     {
       "caption": "Enabled",
       "codename": "enabled",
-      "type": "Boolean"
+      "type": "Boolean",
+      "hasformat": true
     },
     {
       "caption": "Password",
       "codename": "password",
-      "type": "Text"
+      "type": "Text",
+      "hasformat": false
     },
     {
       "caption": "Last login",
       "codename": "lastlogin",
-      "type": "DateTime"
+      "type": "DateTime",
+      "hasformat": true
     }
   ]
 ...
 ```
 
+`hasformat` property tells that the field data is available in "human readable"
+value over than in raw value.
 Each field control is bound to the dataset through `codename`.
 
 ```json
@@ -410,6 +418,76 @@ Each field control is bound to the dataset through `codename`.
     "datatype": "BOOLEAN"
   }
 ...
+```
+
+Dataset returns raw values, formatted values and row count to allow
+pagination. If the field does not support formatted value, empty string
+is returned.
+
+```json
+{
+  "dataset": [
+    [
+      "JOHN",
+      "John Doe",
+      "",
+      false,
+      "",
+      "2020-05-18 00:58:44.900000+0200"
+    ],
+    [
+      "BILL",
+      "Bill Mayer",
+      "",
+      false,
+      "",
+      "2020-05-18 00:33:00.000000+0200"
+    ]
+  ],
+  "fdataset": [
+    [
+      "",
+      "",
+      "",
+      "No",
+      "",
+      "18/05/2020 00:58:44"
+    ],
+    [
+      "",
+      "",
+      "",
+      "No",
+      "",
+      "18/05/2020 00:33:00"
+    ]
+  ],
+  "count": 1
+}
+```
+
+After field validation the current dataset row is returned, so
+a field can initialize several other related fields.
+
+```json
+{
+  "datarow": [
+    "JOHN",
+    "John Doe",
+    "john@contoso.com",
+    false,
+    "",
+    null
+  ],
+  "fdatarow": [
+    "",
+    "",
+    "",
+    "No",
+    "",
+    ""
+  ]
+}
 ```
 
 ## Messages

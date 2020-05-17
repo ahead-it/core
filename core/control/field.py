@@ -43,6 +43,7 @@ class Field(Control):
         rel = self.field._getrelation()
 
         dataset = []
+        fdataset = []
         schema = []
         if rel:
             tab = rel['to']()
@@ -54,10 +55,12 @@ class Field(Control):
             if tab.findset():
                 while tab.read():
                     dataset.append(self._page._getdatarow(tab))
+                    fdataset.append(self._page._getdatarow(tab, True))
 
         return {
             'schema': schema,
-            'dataset': dataset
+            'dataset': dataset,
+            'fdataset': fdataset
         }
 
     def validate(self, value, parsevalue=True):
@@ -76,6 +79,7 @@ class Field(Control):
                 self._page.rec.insert(True)
 
                 self._page._dataset.append(self._page._getdatarow(self._page.rec))
+                self._page._fdataset.append(self._page._getdatarow(self._page.rec, True))
                 self._page._selectedrows = [len(self._page._dataset) - 1]
 
                 if not self._page._islist:
@@ -84,4 +88,7 @@ class Field(Control):
             else:
                 self._page.rec.modify(True)
 
-        return self._page._getdatarow(self._page.rec)
+        return {
+            'datarow': self._page._getdatarow(self._page.rec),
+            'fdatarow': self._page._getdatarow(self._page.rec, True)
+        }

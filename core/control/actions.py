@@ -2,6 +2,13 @@ import core.object.page
 from core.control.control import Control
 
 
+class ActionCategory:
+    RECORD = 'record'
+    PROCESS = 'process'
+    RELATED = 'related'
+    REPORT = 'report'
+
+
 class Action(Control):
     """
     Implements action

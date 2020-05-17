@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date, time
 import sys
 import traceback
 import core.application
@@ -71,4 +71,56 @@ class Convert:
             'message': str(exc[1]),
             'trace': traces
         }
-       
+
+    @staticmethod
+    def strtodate(strval):
+        strval = strval.strip()
+        if not strval:
+            return None
+
+        strval = strval.replace('/', '')
+        strval = strval.replace('-', '')
+        strval = strval.replace('.', '')
+
+        if len(strval) == 2:
+            return date(datetime.now().year, datetime.now().month, int(strval))
+        elif len(strval) == 4:
+            return date(datetime.now().year, int(strval[2:4]), int(strval[0:2]))
+        elif len(strval) == 6:
+            return datetime.strptime(strval, '%d%m%y').date()
+        elif len(strval) == 8:
+            return datetime.strptime(strval, '%d%m%Y').date()
+        else:
+            raise ValueError()
+
+    @staticmethod
+    def strtotime(strval):
+        strval = strval.strip()
+        if not strval:
+            return None
+
+        strval = strval.replace('.', '')
+        strval = strval.replace(':', '')
+
+        if len(strval) == 2:
+            return time(int(strval), 0, 0)
+        elif len(strval) == 4:
+            return time(int(strval[0:2]), int(strval[2:4]), 0)
+        elif len(strval) == 6:
+            return datetime.strptime(strval, '%H%M%S').date()
+        else:
+            raise ValueError()
+
+    @staticmethod
+    def strtodatetime(strval):
+        strval = strval.strip()
+        if not strval:
+            return None
+
+        parts = strval.split(' ', 1)
+        if len(parts) == 1:
+            return datetime.combine(Convert.strtodate(parts[0]), time(0, 0, 0))
+        else:
+            return datetime.combine(Convert.strtodate(parts[0]), Convert.strtodate(parts[1]))
+
+

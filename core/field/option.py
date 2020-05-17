@@ -18,15 +18,16 @@ class Option(Field):
         self.sqlname = Convert.to_sqlname(self.name)
         self._testvalue = 0
         self._optclass = optclass
+        self._hasformat = True
 
         if not issubclass(optclass, core.object.option.Option):
             error(label('Invalid option class \'{0}\''.format(optclass)))
 
-        opts = optclass.options()
-        if not opts:
+        self._options = optclass.options()
+        if not self._options:
             error(label('Field \'{0}\' has no options defined'.format(self.caption)))
 
-        for opt in opts:
+        for opt in self._options:
             self.value = opt
             self.initvalue = self.value
             self.xvalue = self.value
@@ -38,4 +39,22 @@ class Option(Field):
 
         return value
 
-    
+    def format(self, value):
+        if (value > 0) and (value < len(self._options)):
+            return self._options[value]
+        else:
+            return 0
+
+    def evaluate(self, strval):
+        for opt in self._options:
+            if self._options[opt].lower() == strval.lower():
+                return opt
+
+        try:
+            opt = int(strval)
+            if (opt > 0) and (opt < len(self._options)):
+                return opt
+        except:
+            pass
+
+        error(label('Value \'{0}\' is not valid for \'{1}\''.format(strval, self.caption)))

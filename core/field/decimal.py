@@ -17,6 +17,7 @@ class Decimal(Field):
         self.initvalue = self.value
         self.xvalue = self.value
         self._testvalue = self.value
+        self._hasformat = True
 
     def checkvalue(self, value):
         if isinstance(value, float):

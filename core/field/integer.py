@@ -17,7 +17,17 @@ class Integer(Field):
         self.xvalue = 0
         self._testvalue = 0
         self.autoincrement = False
+        self._hasformat = True
+        self.blankzero = False
 
     def checkvalue(self, value):
         return int(value)
-        
+
+    def format(self, value):
+        if self.blankzero and (value == 0):
+            return ''
+        else:
+            return str(value)
+
+    def evaluate(self, strval):
+        return int(strval)

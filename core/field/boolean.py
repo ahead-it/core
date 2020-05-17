@@ -17,14 +17,10 @@ class Boolean(Field):
         self.initvalue = False
         self.xvalue = False
         self._testvalue = False
+        self._hasformat = True
 
     def checkvalue(self, value):
-        if isinstance(value, str):
-            if value.lower() in ['1', 'true', label('true')]:
-                return True
-            else:
-                return False
-        elif isinstance(value, int):
+        if isinstance(value, int):
             if value == 1:
                 return True
             else:
@@ -33,4 +29,15 @@ class Boolean(Field):
             return value
         else:
             raise Exception('Value \'{0}\' is not valid for \'{1}\''.format(value, self.caption))
-        
+
+    def format(self, value):
+        if value:
+            return label('Yes')
+        else:
+            return label('No')
+
+    def evaluate(self, strval):
+        if strval.lower() in ['1', 'true', label('true').lower(), 'yes', label('yes').lower()]:
+            return True
+        else:
+            return False

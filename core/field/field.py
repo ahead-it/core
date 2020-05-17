@@ -118,6 +118,7 @@ class Field:
         self._parent = None
         self._relations = []
         self._testvalue = None
+        self._hasformat = False
         self.name = ''
         self.caption = ''
         self.sqlname = ''
@@ -177,6 +178,12 @@ class Field:
         Try to transform string to field value
         """
         return strval
+
+    def format(self, value):
+        """
+        Format value to string
+        """
+        return value
 
     def checkvalue(self, value):
         """
