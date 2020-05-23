@@ -2,6 +2,7 @@ import importlib
 import uuid
 from core.object.option import Option
 from core.language import label
+from core.field import Field
 import core.session
 
 
@@ -27,6 +28,7 @@ class Unit:
         self._name = ""
         self._caption = ""
         self._id = str(uuid.uuid4())
+        self._fields = []  # type: List[Field]
         
     def _init(self):
         """
@@ -45,6 +47,13 @@ class Unit:
                     
         if not self._caption:
             self._caption = self._name
+
+        for m in self.__dict__:
+            a = getattr(self, m)
+            if issubclass(type(a), Field):
+                a._parent = self
+                a._codename = m
+                self._fields.append(a)
 
     def __reduce__(self):
         """

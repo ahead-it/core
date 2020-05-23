@@ -115,7 +115,7 @@ class Field:
     """
     def __init__(self):
         self._codename = ''
-        self._parent = None
+        self._parent = None  # type: core.object.unit.Unit
         self._relations = []
         self._testvalue = None
         self._hasformat = False
@@ -238,10 +238,26 @@ class Field:
         if not self._relations:
             return None
 
-        # FIXME
-        return self._relations[0]
-            
-    def related(self, to, field=None, when=None, filters=None):
+        for rel in self._relations:
+            found = True
+
+            if rel['when']:
+                for f in rel['when']:
+                    tgt = None
+                    for fld in self._parent._fields:
+                        if fld._codename == f:
+                            tgt = fld
+                            break
+                    if (tgt is None) or (tgt.value != rel['when'][f]):
+                        found = False
+                        break
+
+            if found:
+                return rel
+
+        return None
+
+    def related(self, to, *, field=None, when=None, filters=None):
         """
         Add a relation to other table
         

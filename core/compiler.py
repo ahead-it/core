@@ -219,6 +219,18 @@ class Merger:
         self._generate_symbols(2)
         core.language._suspend_translation = False
 
+        # Save list of available apps
+        apps = []
+        apps.append('apps = {}')
+        for nfo in Application.all_apps:
+            ena = 'True' if nfo in Application.apps else 'False'
+            apps.append('apps[\'' + nfo + '\'] = ' + ena)
+
+        fn = Application.base_path + 'app/apps.py'
+        f = open(fn, "w")
+        f.write('\n'.join(apps))
+        f.close()
+
     def _generate_symbols(self, phase):
         """
         Generate symbols

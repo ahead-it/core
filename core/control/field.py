@@ -36,7 +36,7 @@ class Field(Control):
         if self.field._relations:
             obj['hasrelations'] = True
 
-    def getrelated(self, value=''):
+    def getrelated(self, value='', search=True):
         """
         Get relations
         """

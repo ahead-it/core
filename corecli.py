@@ -20,6 +20,7 @@ def generate_texts(appname):
     cmp.generate_textcatalog()
     print('Text catalog for \'{0}\' has been generated.'.format(appname))
 
+
 def generate_symbols():
     Application.initialize()
     m = Merger()
@@ -36,6 +37,7 @@ def generate_symbols():
     m.generate_symbols()        
     print('Symbols has been generated.')
 
+
 def check_code(path):
     for root, dirs, files in os.walk(path):
         if not root.endswith('/'):
@@ -47,6 +49,7 @@ def check_code(path):
 
     print('Source code check done.')
 
+
 def sync_schema(inst, mode):
     Application.initialize()
     Application.load_instance(inst)
@@ -56,8 +59,10 @@ def sync_schema(inst, mode):
     else:
         print('Schema synchronization done with errors.')    
 
+
 def signal_exit(sign, frame):
     Application.stop_servers()
+
 
 def start_webserver(inst):
     Application.initialize()
@@ -65,6 +70,7 @@ def start_webserver(inst):
     
     signal.signal(signal.SIGINT, signal_exit)   
     Application.start_servers()
+
 
 def install_service(inst):
     Application.initialize()
@@ -75,12 +81,14 @@ def install_service(inst):
     win32serviceutil.InstallService(cla, Application.instance['service_name'], Application.instance['service_display'], exeArgs=inst)  
     print('Windows service installed.') 
 
+
 def uninstall_service(inst):
     Application.initialize()
     Application.load_instance(inst)
 
     win32serviceutil.RemoveService(Application.instance['service_name'])
     print('Windows service uninstalled.') 
+
 
 if __name__ == '__main__':
     print(r'''
@@ -94,7 +102,7 @@ if __name__ == '__main__':
 Ahead Core (v {0})
 Powered by Python {1}
 Copyright ahead.it 2019-2020
-'''.format(core.__appinfo().version, sys.version))
+'''.format(Application.VERSION, sys.version))
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--text', help='generate text catalogs', metavar='APPNAME')

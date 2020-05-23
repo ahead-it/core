@@ -23,10 +23,13 @@ class Application:
     _cli_loglevel = []
     _log_lock = multiprocessing.Lock()
 
+    VERSION = '1.0.20005.0'
+
     base_path = ''
-    apps = {} # type: Dict[str, AppInfo]
-    instance = {} # type: dict
-    process_pool = None # type: core.process.ProcessPool
+    apps = {}  # type: Dict[str, AppInfo]
+    all_apps = {}  # type: Dict[str, AppInfo]
+    instance = {}  # type: dict
+    process_pool = None  # type: core.process.ProcessPool
         
     @staticmethod
     def initialize():
@@ -91,24 +94,29 @@ class Application:
         """
         Application.apps.clear()
 
-        # Register core
-        nfo = getattr(core, '__appinfo')()
-        Application.apps[nfo.name] = nfo
+        app_list = {}
+        app_path = Application.base_path + "app/"
+        if os.path.exists(app_path + 'apps.py'):
+            mod = importlib.import_module('app.apps')
+            app_list = getattr(mod, 'apps')
 
         # Register all the apps
-        for app in os.listdir(Application.base_path + "app"):
-            dn = Application.base_path + "app/" + app
+        for app in os.listdir(app_path):
+            dn = app_path + app
             if os.path.isdir(dn) and (not app.startswith("__")):
                 try:
                     mod = importlib.import_module("app." + app)
                     nfo = getattr(mod, '__appinfo')()
-                    if nfo.enabled:
+                    Application.all_apps[nfo.name] = nfo
+
+                    if (nfo.name in app_list) and app_list[nfo.name]:
                         Application.apps[nfo.name] = nfo
                         Application.log('loadapps', 'I', core.language.label('App \'{0}\' version \'{1}\' loaded'.format(
                             nfo.display_name, nfo.version)))
+
                 except:
                     Application.logexception('loadapps')
-        
+
     @staticmethod
     def log(context, severity, message):
         """

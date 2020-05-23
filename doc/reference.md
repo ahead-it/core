@@ -14,7 +14,6 @@ def __appinfo():
     app.display_name = 'My app'
     app.version = '1.0.19001.0'
     app.author = 'My Dream Team'
-    app.enabled = True
     return app
 ```
 
@@ -95,6 +94,46 @@ class MathManagement(Codeunit):
 
 ## Page
 [Page reference](page.md)
+
+## Unit Extension
+Each unit (codeunit, table, page...) can be extended. Core compiler creates proxy object
+merging multiple units in a single usable class.
+
+For example, define a codeunit `app/one/codeunit/mathmanagement.py`
+
+```python
+from core import *
+
+
+class MathManagement(Codeunit):
+    def sum(self, a, b):
+        return a + b
+```
+
+Define the codeunit extension `app/two/codeunit/mathmanagement.py`
+with a class that inherits the previous one:
+
+```python
+from core import *
+import app.two.codeunit.mathmanagement
+
+class MathManagement(app.two.codeunit.mathmanagement.Codeunit):
+    def mul(self, a, b):
+        return a * b
+```
+
+Run the symbol creation and then simply use the merged object:
+
+```python
+from core import *
+from app import codeunit
+
+class MyCodeunit(Codeunit):
+    def mymethod(self, a, b):
+        mm = MathManagement()
+        return mm.sum(a, b) / mm.mul(a, b)
+
+```
 
 ## Access control
 ### Public method

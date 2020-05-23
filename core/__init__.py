@@ -20,11 +20,3 @@ from core.utility.system import System, error, commit
 from core.utility.client import Client
 
 from core.object.attributes import PublicMethod
-
-def __appinfo():
-    appNfo = AppInfo()
-    appNfo.display_name = 'Core'
-    appNfo.version = '1.0.20005.0'
-    appNfo.author = 'ahead.it'
-    return appNfo
-    

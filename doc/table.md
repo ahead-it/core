@@ -15,7 +15,7 @@ class Customer(Table):
 
         self._setprimarykey(self.no)
 ```
-## Fields
+## Field Types
 These field types are defined:
 * `Code` string value, without leading and trailing spaces,
 always in uppercase
@@ -152,8 +152,28 @@ class Customer(Table):
         postmgmt.check(self.postcode.value)
 ```
 
-# Fields
-## Option
+## Table Relations
+It's possible to define a table relation using `related` function
+of a field.
+
+`related(to, field, when, filters)`
+ 
+For example:
+```python
+    ...
+    self.type = field.Option('Type', label('Type'), option.SalesLineType)
+    
+    self.no = field.Code('No.', label('No.'), 20)
+    self.no.related(table.GLAccount,
+                    when={'type': option.SalesLineType.GLACCOUNT},
+                    filters=lambda rec: rec.posting.setrange(True))
+    self.no.related(table.Item,
+                    when={'type': option.SalesLineType.ITEM})
+    ...
+```
+
+## Type Syntax
+### Option
 Here's the syntax to define a `field.Option`:
 
 ```python

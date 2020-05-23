@@ -44,6 +44,8 @@ python corecli.py --sym
 You will find the result in the `app` folder with a proxy
 module/class for each object type.
 
+Edit `app/apps.py` to enable or disable available apps.
+
 ### Source code check
 You can check source code run linting from
 the command line, ex:

@@ -29,14 +29,6 @@ class Table(Unit):
         self._sqlname = Convert.to_sqlname(self._name)
         self._filterlevel = 0
 
-        self._fields = [] # type: List[Field]
-        for m in self.__dict__:
-            a = getattr(self, m)
-            if issubclass(type(a), Field):
-                a._parent = self
-                a._codename = m
-                self._fields.append(a)
-
         self.setcurrentkey()
 
     def __setattr__(self, key, value):

@@ -5,7 +5,6 @@ import asyncio
 import sys
 import uuid
 from typing import List, Callable
-#import ptvsd #fixme future
 import core.application
 import core.language
 import core.session
@@ -103,9 +102,6 @@ def worker_loop(args):
     """
 
     try:
-        #fixme future start for specific session, destroy process after debug
-        #daemon = ptvsd.enable_attach(('0.0.0.0', 3000))
-
         core.application.Application.initialize()
         core.application.Application._cli_loglevel = args['cli_loglevel']
         core.application.Application._log_lock = args['log_lock']
