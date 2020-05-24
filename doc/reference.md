@@ -115,9 +115,9 @@ with a class that inherits the previous one:
 
 ```python
 from core import *
-import app.two.codeunit.mathmanagement
+import app.one.codeunit.mathmanagement
 
-class MathManagement(app.two.codeunit.mathmanagement.Codeunit):
+class MathManagement(app.one.codeunit.mathmanagement.Codeunit):
     def mul(self, a, b):
         return a * b
 ```
