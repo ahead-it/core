@@ -9,7 +9,7 @@ import core.application
 import core.language
 import core.session
 from core.utility.convert import Convert, RemoteError
-from core.utility.proxy import Reloader
+from core.utility.proxy import Reloader, Proxy
 
 
 class Control:
@@ -159,6 +159,7 @@ class Worker:
             'pipe': pipe_pair[1]
         }  
 
+        self.id = str(uuid.uuid4())
         self.process = multiprocessing.Process(target=worker_loop, args=(args, ))
         self.pipe_pair = pipe_pair
         self.pipe = self.pipe_pair[0]
@@ -180,6 +181,27 @@ class Worker:
         Start the worker process
         """
         self.process.start()
+
+    def recv_sync(self):
+        """
+        Receive a message from the child (sync)
+        """
+        try:
+            if not self.pipe.poll():
+                return None
+
+            msg = self.pipe.recv()
+
+            if msg['message'] not in ['error', 'response']:
+                raise Exception(core.language.label('Invalid message {0} in recv sync'.format(msg['message'])))
+
+            if msg['message'] == 'error':
+                raise RemoteError(msg['value'])
+
+            return msg
+
+        finally:
+            self.cleanup()
 
     async def recv(self):
         """
@@ -206,6 +228,16 @@ class Worker:
             if not self.keep_alive:
                 self.cleanup()
 
+    def error(self, message):
+        """
+        Send error to chil
+        """
+        msg = {
+            'message': 'error',
+            'value': message
+        }
+        self.send(msg)
+
     def send(self, obj):
         """
         Send a message to the child
@@ -224,6 +256,7 @@ class Worker:
         }
         self.pipe.send(msg)
 
+
 class ProcessPool:
     """
     Handles multiprocessing
@@ -232,8 +265,9 @@ class ProcessPool:
     def __init__(self, min_workers, max_workers):
         self.min_workers = min_workers
         self.max_workers = max_workers
-        self.pool = [] # type: List[Worker]
+        self.pool = []  # type: List[Worker]
         self.busy_event = threading.Event()
+        self.lock_pool = threading.Lock()
         self.exit = False
 
     def add_worker(self):
@@ -242,7 +276,7 @@ class ProcessPool:
         """
         worker = Worker()
         worker.start()
-        self.pool.append(worker)  
+        self.pool.append(worker)
         return worker  
 
     def start(self):
@@ -258,8 +292,9 @@ class ProcessPool:
         self.exit = False
         self.busy_event.clear()
 
-        for i in range(0, self.min_workers):
-            self.add_worker()
+        with self.lock_pool:
+            for i in range(0, self.min_workers):
+                self.add_worker()
 
     def stop(self):
         """
@@ -267,16 +302,17 @@ class ProcessPool:
         """
         self.exit = True
 
-        while self.pool:
-            for worker in self.pool:
-                if worker.pipe_pair is not None:
-                    worker.pipe_pair[0].close()
-                    worker.pipe_pair[1].close()
-                    worker.pipe_pair = None
+        with self.lock_pool:
+            while self.pool:
+                for worker in self.pool:
+                    if worker.pipe_pair is not None:
+                        worker.pipe_pair[0].close()
+                        worker.pipe_pair[1].close()
+                        worker.pipe_pair = None
 
-                if not worker.process.is_alive():
-                    self.pool.remove(worker)
-                    break  
+                    if not worker.process.is_alive():
+                        self.pool.remove(worker)
+                        break
 
         self.busy_event.set()                
 
@@ -287,6 +323,38 @@ class ProcessPool:
         for worker in self.pool:
             worker.pipe.send({'message': 'reload', 'value': modulename})
 
+    def trygetworker(self):
+        """
+        Try get a worker, the first available or a new one if is possible
+        """
+        result = None
+
+        with self.lock_pool:
+            for worker in self.pool:
+                if not worker.busy:
+                    if not worker.process.is_alive():
+                        core.application.Application.log('prcwrker', 'W', core.language.label(
+                            'Process \'{0}\' is not responding, adding a new process to pool'.format(
+                                worker.process.pid)))
+                        self.pool.remove(worker)
+                        result = self.add_worker()
+
+                    else:
+                        result = worker
+
+                    result.busy = True
+                    break
+
+        if (not result) and (len(self.pool) < self.max_workers):
+            core.application.Application.log('prcwrker', 'I', core.language.label(
+                'Adding a new process to pool {0}'.format(len(self.pool) + 1)))
+
+            with self.lock_pool:
+                result = self.add_worker()
+                result.busy = True
+
+        return result
+
     async def getworker(self):
         """
         Get a worker, the first available or a new one if is possible
@@ -294,23 +362,7 @@ class ProcessPool:
         result = None
 
         while not self.exit:
-            for worker in self.pool:
-                if not worker.busy:
-                    if not worker.process.is_alive():
-                        core.application.Application.log('prcwrker', 'W', core.language.label(
-                            'Process \'{0}\' is not responding, adding a new process to pool'.format(worker.process.pid)))
-                        self.pool.remove(worker)
-                        result = self.add_worker()
-
-                    else:
-                        result = worker
-
-                    break
-
-            if (not result) and (len(self.pool) < self.max_workers):
-                core.application.Application.log('prcwrker', 'I', core.language.label('Adding a new process to pool {0}'.format(len(self.pool) + 1)))                
-                result = self.add_worker()
-
+            result = self.trygetworker()
             if result:
                 break
 
@@ -318,8 +370,51 @@ class ProcessPool:
             await asyncio.get_event_loop().run_in_executor(None, self.busy_event.wait)
             self.busy_event.clear()
 
-        if result:
-            result.busy = True
-
         return result
 
+
+class Task:
+    @staticmethod
+    def _worker(workerid, unitname, method, runas, *args):
+        """
+        Worker main function
+        """
+        core.session.Session.type = 'batch'
+        core.session.Session.authenticated = True
+        if runas:
+            core.session.Session.user_id = runas
+        core.session.Session.start()
+
+        try:
+            proxy = Proxy(unitname)
+            proxy.create()
+            result = proxy.invoke(method, workerid, *args)
+            if result is None:
+                result = True
+            return result
+
+        finally:
+            core.session.Session.stop()
+
+    @staticmethod
+    def getresult(workerid):
+        """
+        Get result or error
+        """
+        for worker in core.application.Application.process_pool.pool:
+            if worker.id == workerid.lower():
+                return worker.recv_sync()
+
+        return None
+
+    @staticmethod
+    def run(unitname, method, runas, *args):
+        """
+        Run task async
+        """
+        worker = core.application.Application.process_pool.trygetworker()
+        if not worker:
+            return None
+
+        worker.request(Task._worker, worker.id, unitname, method, runas, *args)
+        return worker.id

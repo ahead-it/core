@@ -1,7 +1,9 @@
 import multiprocessing
+import threading
 import os
 import importlib
 import inspect
+import time
 from datetime import datetime
 from typing import Dict
 import json
@@ -22,6 +24,8 @@ class Application:
     """
     _cli_loglevel = []
     _log_lock = multiprocessing.Lock()
+    _thd_scheduler = None
+    _thd_sched_exit = False
 
     VERSION = '1.0.20005.0'
 
@@ -81,6 +85,7 @@ class Application:
             Application._assert_default(opts, 'webserver_secure', False)
             Application._assert_default(opts, 'min_processes', 2)            
             Application._assert_default(opts, 'max_processes', 32)
+            Application._assert_default(opts, 'scheduler_enabled', False)
 
             Application.instance = opts
 
@@ -206,6 +211,20 @@ class Application:
         return res
 
     @staticmethod
+    def _scheduler_loop():
+        try:
+            core.application.Application.log('scheduler', 'I', core.language.label('Task scheduler started'))
+
+            while not Application._thd_sched_exit:
+                core.utility.proxy.Proxy.su_invoke('app.codeunit.ScheduledTask', 'dispatch')
+                time.sleep(2)
+
+            core.application.Application.log('scheduler', 'I', core.language.label('Task scheduler stopped'))
+
+        except:
+            Application.logexception('scheduler')
+
+    @staticmethod
     def start_servers():
         """
         Start servers and process pools
@@ -219,6 +238,11 @@ class Application:
 
             core.utility.proxy.Reloader.start()
 
+            if Application.instance['scheduler_enabled']:
+                Application._thd_scheduler = threading.Thread(target=Application._scheduler_loop)
+                Application._thd_scheduler.start()
+
+            # after this Tornado loop will block execution
             if Application.instance['webserver_enabled']:
                 core.webserver.WebServer.start()
 
@@ -230,8 +254,12 @@ class Application:
         """
         Stop servers and process pools
         """        
-        try:    
+        try:
             core.webserver.WebServer.stop()
+
+            if Application._thd_scheduler:
+                Application._thd_sched_exit = True
+                Application._thd_scheduler.join()
 
             core.utility.proxy.Reloader.stop()
 
@@ -241,4 +269,3 @@ class Application:
                
         except:
             Application.logexception('strtsrvr')
-     

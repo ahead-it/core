@@ -270,11 +270,7 @@ class WsHandler(tornado.websocket.WebSocketHandler):
         
     def on_close(self):
         try:
-            msg = {
-                'message': 'error',
-                'value': label('Client disconnected')
-            }
-            self.worker.send(msg)
+            self.worker.error(label('Client disconnected'))
             asyncio.create_task(self.worker.recv())
         except:
             pass            

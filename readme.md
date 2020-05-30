@@ -82,6 +82,7 @@ Additional properties:
 * `certificate_key` certificate key file name
 * `min_processes` minimum worker processes (default: 2)
 * `max_processes` maximum worker processes (default: 32)
+* `scheduler_enabled` if True job scheduler will be enabled
 
 Additional properties (Windows only):
 * `service_name` Windows service name

@@ -262,16 +262,17 @@ class SqlServer(core.database.server.Server):
             if value == datetime(1753, 1, 1):
                 res = None
             else:
+                value = value.replace(tzinfo=dateutil.tz.UTC)
                 res = value.astimezone(core.session.Session.timezone)
 
         elif field.type == FieldType.DATE:
-            if value == date(1753, 1, 1):
+            if value == datetime(1753, 1, 1):
                 res = None
             else:
                 res = value.date()
 
         elif field.type == FieldType.TIME:
-            if value == date(1753, 1, 1):
+            if value == datetime(1753, 1, 1):
                 res = None
             else:
                 res = value.time()
@@ -305,7 +306,7 @@ class SqlServer(core.database.server.Server):
             if value is None:
                 res = date(1753, 1, 1)
             else:
-                res = datetime.combine(date(1753, 1, 1), value)
+                res = datetime.combine(date(1754, 1, 1), value)
 
         else:
             raise Exception(label('Unknown field type \'{0}\''.format(field.type[1])))
@@ -444,6 +445,8 @@ class SqlServer(core.database.server.Server):
             sql += '[' + field.sqlname + '], '
 
         sql += '[timestamp] FROM [' + table._sqlname + ']'
+        if table._locktable:
+            sql += ' WITH (UPDLOCK)'
 
         where = []
         if pk:
@@ -493,7 +496,7 @@ class SqlServer(core.database.server.Server):
             if size is None:
                 size = self.dataset_size
 
-            sql += 'OFFSET ' + str(offset) + ' ROWS FETCH FIRST ' + str(size) + ' ROWS ONLY'
+            sql += ' OFFSET ' + str(offset) + ' ROWS FETCH FIRST ' + str(size) + ' ROWS ONLY'
 
         return self.query(sql, pars)
 

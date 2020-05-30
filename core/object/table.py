@@ -22,6 +22,7 @@ class Table(Unit):
         
         self._currentkey = [] # type: List[Field]
         self._ascending = True
+        self._locktable = False
 
         self._currentrow = -1
         self._dataset = None
@@ -93,7 +94,7 @@ class Table(Unit):
         """
         for field in self._fields:
             field.xvalue = field.value
-    
+
     def insert(self, run_trigger=False):
         """
         Insert the record
@@ -123,6 +124,12 @@ class Table(Unit):
         """
         Event before modify
         """
+
+    def locktable(self, lock=True):
+        """
+        Set locktable
+        """
+        self._locktable = lock
 
     def delete(self, run_trigger=False):
         """
