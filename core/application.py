@@ -24,8 +24,8 @@ class Application:
     """
     _cli_loglevel = []
     _log_lock = multiprocessing.Lock()
-    _thd_scheduler = None
-    _thd_sched_exit = False
+    _thd_check = None
+    _thd_check_exit = False
 
     VERSION = '1.0.20005.0'
 
@@ -88,6 +88,7 @@ class Application:
             Application._assert_default(opts, 'scheduler_enabled', False)
 
             Application.instance = opts
+            Session.instance = instname
 
         except:
             Application.logexception('loadinst')    
@@ -211,18 +212,20 @@ class Application:
         return res
 
     @staticmethod
-    def _scheduler_loop():
+    def _check_loop():
         try:
-            core.application.Application.log('scheduler', 'I', core.language.label('Task scheduler started'))
+            sched = Application.instance['scheduler_enabled']
+            if sched:
+                core.application.Application.log('chckloop', 'I', core.language.label('Task scheduler enabled'))
 
-            while not Application._thd_sched_exit:
-                core.utility.proxy.Proxy.su_invoke('app.codeunit.ScheduledTask', 'dispatch')
+            while not Application._thd_check_exit:
+                if sched:
+                    core.utility.proxy.Proxy.su_invoke('app.codeunit.ScheduledTask', 'dispatch')
+
                 time.sleep(2)
 
-            core.application.Application.log('scheduler', 'I', core.language.label('Task scheduler stopped'))
-
         except:
-            Application.logexception('scheduler')
+            Application.logexception('chckloop')
 
     @staticmethod
     def start_servers():
@@ -238,9 +241,8 @@ class Application:
 
             core.utility.proxy.Reloader.start()
 
-            if Application.instance['scheduler_enabled']:
-                Application._thd_scheduler = threading.Thread(target=Application._scheduler_loop)
-                Application._thd_scheduler.start()
+            Application._thd_check = threading.Thread(target=Application._check_loop)
+            Application._thd_check.start()
 
             # after this Tornado loop will block execution
             if Application.instance['webserver_enabled']:
@@ -257,9 +259,9 @@ class Application:
         try:
             core.webserver.WebServer.stop()
 
-            if Application._thd_scheduler:
-                Application._thd_sched_exit = True
-                Application._thd_scheduler.join()
+            if Application._thd_check:
+                Application._thd_check_exit = True
+                Application._thd_check.join()
 
             core.utility.proxy.Reloader.stop()
 

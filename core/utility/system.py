@@ -104,3 +104,10 @@ def commit():
     """
     if core.session.Session.database:
         core.session.Session.database.commit()
+
+def rollback():
+    """
+    Rollback the database
+    """
+    if core.session.Session.database:
+        core.session.Session.database.rollback()

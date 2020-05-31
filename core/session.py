@@ -13,7 +13,8 @@ import core.database.factory
 import core.utility.proxy
 import core.utility.system
 
-class SessionData():
+
+class SessionData:
     """
     Contains in memory session data
     """
@@ -26,7 +27,7 @@ class SessionData():
         self.auth_token = ''
         self.address = ''
         self.authenticated = False
-        self.objects = {} # type: Dict[str, core.object.unit]
+        self.objects = {}  # type: Dict[str, core.object.unit]
 
 
 class SessionMeta(type):
@@ -70,6 +71,7 @@ class Session(metaclass=SessionMeta):
     """    
     process_id = os.getpid()
     hostname = socket.gethostname()
+    instance = ''
     database = None  # type: core.database.server.Server
     db_id = None
     connected = False

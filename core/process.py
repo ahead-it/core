@@ -182,11 +182,20 @@ class Worker:
         """
         self.process.start()
 
+    def kill(self):
+        """
+        Kill itself
+        """
+        self.process.kill()
+
     def recv_sync(self):
         """
         Receive a message from the child (sync)
         """
         try:
+            if not self.process.is_alive():
+                raise Exception('Process {0} killed'.format(self.process.pid))
+
             if not self.pipe.poll():
                 return None
 
@@ -388,13 +397,19 @@ class Task:
         try:
             proxy = Proxy(unitname)
             proxy.create()
-            result = proxy.invoke(method, workerid, *args)
-            if result is None:
-                result = True
-            return result
+            return proxy.invoke(method, workerid, *args)
 
         finally:
             core.session.Session.stop()
+
+    @staticmethod
+    def kill(workerid):
+        """
+        Kill worker
+        """
+        for worker in core.application.Application.process_pool.pool:
+            if worker.id == workerid.lower():
+                worker.kill()
 
     @staticmethod
     def getresult(workerid):

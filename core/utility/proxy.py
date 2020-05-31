@@ -221,6 +221,11 @@ class Proxy:
             if isinstance(obj, str):
                 obj = Proxy.su_create(obj)
             method = getattr(obj, methodname)
-            return method(*args, **kwargs)
+
+            try:
+                return method(*args, **kwargs)
+            except:
+                core.utility.system.rollback()
+                core.application.Application.logexception('suinvoke')
         except:
             pass

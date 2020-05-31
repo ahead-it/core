@@ -447,6 +447,8 @@ class SqlServer(core.database.server.Server):
         sql += '[timestamp] FROM [' + table._sqlname + ']'
         if table._locktable:
             sql += ' WITH (UPDLOCK)'
+        else:
+            sql += ' WITH (READUNCOMMITTED)'
 
         where = []
         if pk:
@@ -523,7 +525,7 @@ class SqlServer(core.database.server.Server):
 
     def table_isempty(self, table: core.object.table.Table):
         pars = []
-        sql = 'SELECT TOP 1 NULL [ne] FROM [' + table._sqlname + ']'  
+        sql = 'SELECT TOP 1 NULL [ne] FROM [' + table._sqlname + '] WITH (READUNCOMMITTED)'
 
         where = self._get_where(table, pars)
         if where:
@@ -536,7 +538,7 @@ class SqlServer(core.database.server.Server):
 
     def table_count(self, table: core.object.table.Table):
         pars = []
-        sql = 'SELECT COUNT(*) [c] FROM [' + table._sqlname + ']'
+        sql = 'SELECT COUNT(*) [c] FROM [' + table._sqlname + '] WITH (READUNCOMMITTED)'
 
         where = self._get_where(table, pars)
         if where:
