@@ -83,7 +83,8 @@ class Application:
             Application._assert_default(opts, 'webserver_enabled', False)
             Application._assert_default(opts, 'webserver_port', 8080)
             Application._assert_default(opts, 'webserver_secure', False)
-            Application._assert_default(opts, 'min_processes', 2)            
+            Application._assert_default(opts, 'webserver_fallback', '')
+            Application._assert_default(opts, 'min_processes', 2)
             Application._assert_default(opts, 'max_processes', 32)
             Application._assert_default(opts, 'scheduler_enabled', False)
 

@@ -324,6 +324,14 @@ class StaticHandler(tornado.web.StaticFileHandler):
         self.set_header('Access-Control-Allow-Methods', 'GET, OPTIONS')   
         await super().get(path)
 
+    def validate_absolute_path(self, root: str, absolute_path: str):
+        if (not os.path.exists(absolute_path)) and\
+           core.application.Application.instance['webserver_fallback']:
+            self.redirect(core.application.Application.instance['webserver_fallback'])
+            return None
+
+        return super().validate_absolute_path(root, absolute_path)
+
 
 class WebServer:
     """

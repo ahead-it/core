@@ -190,14 +190,28 @@ class Page(Unit):
         recbtn = Action(act_area, label('Record'), Icon.DATA, ActionCategory.RECORD)
         recbtn.move_first()
 
-        if (not self._readonly) and self.rec:
-            if self._insertallowed and (not self._islist):
+        if self.rec:
+            showins = False
+            showmod = False
+            showdel = self._deleteallowed and (not self._readonly)
+
+            if self._islist:
+                showins = self._insertallowed and (not self._readonly)
+                showmod = self._modifyallowed and (not self._readonly)
+
+                if self._cardpage:
+                    card = self._cardpage()
+                    showins |= card._insertallowed and (not card._readonly)
+                    showmod |= card._modifyallowed and (not card._readonly)
+                    showdel |= card._deleteallowed and (not card._readonly)
+
+            if showins:
                 self._newbtn = Action(recbtn, label('New'), Icon.NEW)
 
-            if self._modifyallowed and (not self._islist):
+            if showmod:
                 self._modbtn = Action(recbtn, label('Modify'), Icon.EDIT)
 
-            if self._deleteallowed:
+            if showdel:
                 self._delbtn = Action(recbtn, label('Delete'), Icon.DELETE)
 
         self._refbtn = Action(recbtn, label('Refresh'), Icon.REFRESH)
@@ -268,16 +282,18 @@ class Page(Unit):
             self.rec.get(*self._getrowpk(i))
             self.rec.delete(True)
 
-        newds = []
-        newfds = []
-        for i in self._dataset:
-            if i not in self._selectedrows:
-                newds.append(self._dataset[i])
-                newfds.append(self._fdataset[i])
+        for i in self._selectedrows:
+            del self._dataset[i]
+            del self._fdataset[i]
+
+        msg = {
+            'action': 'deleterows',
+            'rows': self._selectedrows,
+            'pageid': self._id,
+        }
+        Client.send(msg)
 
         self._selectedrows = []
-        self._dataset = newds
-        self._fdataset = newfds
 
     def _getdata(self, offset=0, limit=1, sorting=None, filters=None):
         """
