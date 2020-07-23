@@ -49,8 +49,8 @@ class Field(Control):
             tab = rel['to']()
 
             schema = self._page._getschema(tab)
-
-            # FIXME filter by value
+            if rel['filters']:
+                rel['filters'](tab)
 
             if tab.findset():
                 while tab.read():

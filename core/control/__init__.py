@@ -7,3 +7,4 @@ from core.control.contentarea import ContentArea
 from core.control.group import Group
 from core.control.repeater import Repeater
 from core.control.field import Field, FieldType
+from core.control.subpage import SubPage

@@ -284,11 +284,11 @@ class Page(Unit):
 
         newds = []
         newfds = []
-        for i in self._dataset:
+        for i in range(len(self._dataset)):
             if i not in self._selectedrows:
                 newds.append(self._dataset[i])
                 newfds.append(self._fdataset[i])
-                
+
         self._dataset = newds
         self._fdataset = newfds
 

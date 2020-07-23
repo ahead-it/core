@@ -136,3 +136,8 @@ Available properties:
 * `controltype`
 * `datatype`
 * `hasrelations`
+
+## SubPage
+Allow to insert a page inside another page (for example document UI
+with header and rows in the same view).
+
