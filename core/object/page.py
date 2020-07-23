@@ -282,9 +282,15 @@ class Page(Unit):
             self.rec.get(*self._getrowpk(i))
             self.rec.delete(True)
 
-        for i in self._selectedrows:
-            del self._dataset[i]
-            del self._fdataset[i]
+        newds = []
+        newfds = []
+        for i in self._dataset:
+            if i not in self._selectedrows:
+                newds.append(self._dataset[i])
+                newfds.append(self._fdataset[i])
+                
+        self._dataset = newds
+        self._fdataset = newfds
 
         msg = {
             'action': 'deleterows',

@@ -121,6 +121,6 @@ class Convert:
         if len(parts) == 1:
             return datetime.combine(Convert.strtodate(parts[0]), time(0, 0, 0))
         else:
-            return datetime.combine(Convert.strtodate(parts[0]), Convert.strtodate(parts[1]))
+            return datetime.combine(Convert.strtodate(parts[0]), Convert.strtotime(parts[1]))
 
 
