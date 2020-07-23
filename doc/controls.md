@@ -118,6 +118,9 @@ Represents a table of data.
 Allowed childs:
 * `Field`
 
+Available methods:
+* `dblclick`
+
 ## Field
 It's the simplest control that accepts data input. It's rendered differently according to field data type.
 

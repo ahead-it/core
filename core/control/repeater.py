@@ -14,3 +14,10 @@ class Repeater(Control):
 
     def _onrender(self, obj):
         obj['caption'] = self.caption
+
+    def dblclick(self):
+        """
+        Handles action double click
+        """
+        return self._page._modbtn_click()
+    
