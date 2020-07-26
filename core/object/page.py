@@ -45,12 +45,27 @@ class Page(Unit):
             if issubclass(type(a), Control):
                 a._codename = m
 
+    def _getsubpages(self):
+        """
+        :rtype: list[Page]
+        """
+        res = []
+        for c in self._allcontrols:
+            ctl = self._allcontrols[c]
+            if ctl.__class__.__name__ == 'SubPage':
+                res.append(ctl.subpage)
+        return res
+
     def run(self):
         """
         Render a page into the client
         """
         self._onload()
         self._register()
+        for p in self._getsubpages():
+            p._onload()
+            p._register()
+
         obj = self._render()
         obj['action'] = 'page'
         Client.send(obj)
@@ -82,11 +97,20 @@ class Page(Unit):
         Client magic method to handle close
         """
         if not mandatory:
+            for p in self._getsubpages():
+                if not p._onqueryclose():
+                    return False
+
             if not self._onqueryclose():
                 return False
 
+        for p in self._getsubpages():
+            p._onclose()
+            p._unregister()
+
         self._onclose()
         self._unregister()
+
         return True
 
     def close(self):
