@@ -167,7 +167,7 @@ class Merger:
                         imports.append(type(attr).__module__)  
 
             except:
-                Application.logexception('genproxy')
+                Application.logexception('genproxy', mro.__module__ + ' ', 1)
                 continue  
        
         # split local imports from core imports

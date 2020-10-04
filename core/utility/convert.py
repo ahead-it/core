@@ -2,7 +2,13 @@ from datetime import datetime, timezone, date, time
 from decimal import Decimal
 import sys
 import traceback
+import hashlib
 import core.application
+from cryptography.hazmat.primitives.ciphers.algorithms import AES
+from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.hazmat.primitives.ciphers.modes import CBC
+from cryptography.hazmat.primitives.padding import PKCS7
+import base64
 from core.language import label
 
 
@@ -75,10 +81,14 @@ class Convert:
 
     @staticmethod
     def strtodecimal(strval):
+        """
+        Converts a string to Decimal type according to local settings
+        """
         strval = strval.strip()
         if not strval:
             return Decimal('0')
 
+        # FIXME local settings
         if ('.' in strval) and (',' in strval):
             strval = strval.replace('.', '')
 
@@ -87,6 +97,9 @@ class Convert:
 
     @staticmethod
     def strtodate(strval):
+        """
+        Converts a string to Date type according to local settings
+        """
         strval = strval.strip()
         if not strval:
             return None
@@ -95,6 +108,7 @@ class Convert:
         strval = strval.replace('-', '')
         strval = strval.replace('.', '')
 
+        # FIXME localsettins
         if len(strval) == 2:
             return date(datetime.now().year, datetime.now().month, int(strval))
         elif len(strval) == 4:
@@ -108,6 +122,9 @@ class Convert:
 
     @staticmethod
     def strtotime(strval):
+        """
+        Converts a string to Time
+        """
         strval = strval.strip()
         if not strval:
             return None
@@ -126,6 +143,9 @@ class Convert:
 
     @staticmethod
     def strtodatetime(strval):
+        """
+        Converts a string to Date / Time
+        """
         strval = strval.strip()
         if not strval:
             return None
@@ -136,4 +156,29 @@ class Convert:
         else:
             return datetime.combine(Convert.strtodate(parts[0]), Convert.strtotime(parts[1]))
 
+    @staticmethod
+    def encryptstr(value, key):
+        """
+        Encrypt a string AES256-CBC-NOIV with SHA256 KEY-UTF8 value PKCS7 padded
+        """
+        key = hashlib.sha256(key.encode('utf8')).digest()
+        cipher = Cipher(AES(key), CBC(bytearray(16)))
+        encryptor = cipher.encryptor()
+        padder = PKCS7(128).padder()
+        data = padder.update(value.encode('utf8')) + padder.finalize()
+        ct = encryptor.update(data) + encryptor.finalize()
+        return base64.b64encode(ct).decode('utf8')
 
+    @staticmethod
+    def decryptstr(value, key):
+        """
+        Decrypt a string AES256-CBC-NOIV with SHA256 KEY-UTF8 value PKCS7 padded
+        """
+        data = base64.b64decode(value.encode('utf8'))
+        key = hashlib.sha256(key.encode('utf8')).digest()
+        cipher = Cipher(AES(key), CBC(bytearray(16)))
+        decryptor = cipher.decryptor()
+        dt = decryptor.update(data) + decryptor.finalize()
+        unpadder = PKCS7(128).unpadder()
+        txt = unpadder.update(dt) + unpadder.finalize()
+        return txt.decode('utf8')

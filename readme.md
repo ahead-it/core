@@ -17,6 +17,7 @@ Core requirements:
 * [Poedit](https://poedit.net/) for translations
 * [Watchdog](https://pythonhosted.org/watchdog/) for reload on the fly changed files
 * [dateutil](https://github.com/dateutil/dateutil/) for handling timezone 
+* [cryptography](https://github.com/pyca/cryptography) for cryptography
 
 Windows requirements:
 * [six](https://pypi.org/project/six/) for compatibility

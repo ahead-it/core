@@ -172,13 +172,13 @@ class Application:
             Application._log_lock.release()
 
     @staticmethod
-    def logexception(context):
+    def logexception(context, prefix='', skip_trace=0):
         """
         Log the current exception in the application log or instance in a specific context
         Use inside try/catch
         """     
-        exc = Convert.formatexception()
-        message = exc['class'] + ' ' + exc['message'] + ' ' + exc['trace'][0]
+        exc = Convert.formatexception(skip_trace)
+        message = prefix + exc['class'] + ' ' + exc['message'] + ' ' + exc['trace'][0]
         Application.log(context, 'E', message)
 
     @staticmethod
