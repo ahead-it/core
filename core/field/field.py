@@ -11,6 +11,7 @@ class FilterLevels:
     PUBLIC = 0
     PRIVATE = 2
     RELATIONS = 4
+    DROPDOWN = 8
 
 
 class FieldType(Option):
@@ -77,6 +78,10 @@ class FieldFilter:
             elif bt[1] > '':
                 self._addpars(bt[1])
                 return '(' + self._leftnam + ' <= ?)'
+
+        elif '*' in val:
+            self._addpars(val.replace('*', '%'))
+            return '(' + self._leftnam + ' LIKE ?)'
         
         elif val[0:2] in ['<>', '>=', '<=']:
             self._addpars(val[2:])

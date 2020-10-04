@@ -416,25 +416,41 @@ class SqlServer(core.database.server.Server):
         return sql
 
     def _get_where(self, table: core.object.table.Table, pars):
-        where = []
-
+        # split by levels to allow OR instead of AND join
+        modes = {}
+        fltrs = {}
         for field in table._fields:
             for flt in field.filters:
+                if flt.level not in fltrs:
+                    fltrs[flt.level] = []
+                    if flt.level in table._filterlevelmode:
+                        modes[flt.level] = table._filterlevelmode[flt.level]
+                    else:
+                        modes[flt.level] = 'AND'
+                fltrs[flt.level].append(flt)
+
+        where = []
+        for l in fltrs:
+            levwh = []
+            for flt in fltrs[l]:
                 if flt.type == 'equal':
-                    where.append('([' + field.sqlname + '] = ?)')
+                    levwh.append('([' + field.sqlname + '] = ?)')
                     pars.append(self.to_sqlvalue(field, flt.value))
 
                 elif flt.type == 'range':
-                    where.append('([' + field.sqlname + '] BETWEEN ? AND ?)')
-                    pars.append(self.to_sqlvalue(field, flt.min_value)) 
+                    levwh.append('([' + field.sqlname + '] BETWEEN ? AND ?)')
+                    pars.append(self.to_sqlvalue(field, flt.min_value))
                     pars.append(self.to_sqlvalue(field, flt.max_value))
 
                 elif flt.type == 'expr':
                     vals = []
                     left_name = '[' + field.sqlname + ']'
-                    where.append('(' + flt.tosql(vals, left_name=left_name) + ')')
+                    levwh.append('(' + flt.tosql(vals, left_name=left_name) + ')')
                     for v in vals:
-                        pars.append(self.to_sqlvalue(field, v)) 
+                        pars.append(self.to_sqlvalue(field, v))
+
+            mode = ' ' + modes[l] + ' '
+            where.append('(' + mode.join(levwh) + ')')
 
         return where
 

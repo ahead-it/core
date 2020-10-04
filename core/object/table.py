@@ -29,6 +29,7 @@ class Table(Unit):
         self._rowversion = None
         self._sqlname = Convert.to_sqlname(self._name)
         self._filterlevel = 0
+        self._filterlevelmode = {}
 
         self.setcurrentkey()
 
@@ -290,11 +291,13 @@ class Table(Unit):
         else:
             return False
 
-    def setfilterlevel(self, level):
+    def setfilterlevel(self, level, or_mode=False):
         """
         Set filter level for new filters added to fields
         """
         self._filterlevel = level
+        if or_mode:
+            self._filterlevelmode[level] = 'OR'
         
     def rename(self, *newkey):
         """

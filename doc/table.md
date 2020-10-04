@@ -124,7 +124,10 @@ if cust.findfirst():
   * a string expression with `|` logical OR operator, `&` logical AND operator, parenthesis, `*` wildcard LIKE operator, `<>=` equal, greater and lower operator, `..` range operator (`A..Z` between, `..Z` lower or equal than, `A..` greater or equal than)
   * a placeholder for a specific value passed as parameter `{0}`, `{1}` and so on
 
-Filters can be set as various level with `setfilterlevel` function.
+Filters can be set as various level with `setfilterlevel` function. `setfilterlevel` accepts
+`mode` parameter:
+* `AND` default
+* `OR`
 
 ## Triggers
 Following triggers are raised:

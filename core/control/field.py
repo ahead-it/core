@@ -52,6 +52,19 @@ class Field(Control):
             if rel['filters']:
                 rel['filters'](tab)
 
+            # FIXME search fields
+            value = value.strip()
+            if value:
+                tab.setfilterlevel(core.field.field.FilterLevels.DROPDOWN, True)
+                if not value.endswith('*'):
+                    value += '*'
+
+                for f in tab._fields:
+                    if f.type in [core.field.field.FieldType.TEXT, core.field.field.FieldType.CODE]:
+                        f.setfilter(value)
+
+                tab.setfilterlevel(core.field.field.FilterLevels.PUBLIC)
+
             if tab.findset():
                 while tab.read():
                     dataset.append(self._page._getdatarow(tab))

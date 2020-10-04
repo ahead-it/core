@@ -148,7 +148,8 @@ class Page(Unit):
             'id': self._id,
             'name': self._name,
             'caption': self._caption,
-            'controls': []
+            'controls': [],
+            'readonly': self._readonly or (not self._modifyallowed)
         }
 
         for c in self._controls:
