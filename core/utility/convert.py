@@ -1,4 +1,5 @@
 from datetime import datetime, timezone, date, time
+from decimal import Decimal
 import sys
 import traceback
 import core.application
@@ -71,6 +72,18 @@ class Convert:
             'message': str(exc[1]),
             'trace': traces
         }
+
+    @staticmethod
+    def strtodecimal(strval):
+        strval = strval.strip()
+        if not strval:
+            return Decimal('0')
+
+        if ('.' in strval) and (',' in strval):
+            strval = strval.replace('.', '')
+
+        strval = strval.replace(',', '.')
+        return Decimal(strval)
 
     @staticmethod
     def strtodate(strval):

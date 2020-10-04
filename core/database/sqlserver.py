@@ -1,4 +1,5 @@
 from typing import List
+from decimal import Decimal
 from datetime import datetime, date, time
 import dateutil.tz
 import pyodbc
@@ -252,8 +253,11 @@ class SqlServer(core.database.server.Server):
 
     def from_sqlvalue(self, field: Field, value):
         res = None
-        if field.type in [FieldType.CODE, FieldType.TEXT, FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.DECIMAL, FieldType.OPTION]:
+        if field.type in [FieldType.CODE, FieldType.TEXT, FieldType.INTEGER, FieldType.BIGINTEGER, FieldType.OPTION]:
             res = value
+
+        elif field.type == FieldType.DECIMAL:
+            res = value.normalize()
 
         elif field.type == FieldType.BOOLEAN:
             res = True if value == 1 else False

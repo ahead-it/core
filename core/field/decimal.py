@@ -30,3 +30,12 @@ class Decimal(Field):
 
     def deserialize(self, value):
         return decimal.Decimal(value)
+
+    def format(self, value):
+        return str(value).replace('.', ',')  # FIXME local settings
+
+    def evaluate(self, strval):
+        try:
+            return Convert.strtodecimal(strval)
+        except:
+            raise Exception('Value \'{0}\' is not valid for \'{1}\''.format(strval, self.caption))

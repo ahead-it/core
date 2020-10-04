@@ -1,4 +1,5 @@
 from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 
 from core.application import Application
 from core.app import App, AppInfo

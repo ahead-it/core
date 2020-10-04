@@ -43,7 +43,7 @@ class Time(Field):
         if value is None:
             return ''
         else:
-            return value.strftime('%H:%M:%S')
+            return value.strftime('%H:%M:%S')   # FIXME local settings
 
     def evaluate(self, strval):
         try:
