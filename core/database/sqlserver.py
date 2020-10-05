@@ -434,20 +434,20 @@ class SqlServer(core.database.server.Server):
             levwh = []
             for flt in fltrs[l]:
                 if flt.type == 'equal':
-                    levwh.append('([' + field.sqlname + '] = ?)')
-                    pars.append(self.to_sqlvalue(field, flt.value))
+                    levwh.append('([' + flt.field.sqlname + '] = ?)')
+                    pars.append(self.to_sqlvalue(flt.field, flt.value))
 
                 elif flt.type == 'range':
-                    levwh.append('([' + field.sqlname + '] BETWEEN ? AND ?)')
-                    pars.append(self.to_sqlvalue(field, flt.min_value))
-                    pars.append(self.to_sqlvalue(field, flt.max_value))
+                    levwh.append('([' + flt.field.sqlname + '] BETWEEN ? AND ?)')
+                    pars.append(self.to_sqlvalue(flt.field, flt.min_value))
+                    pars.append(self.to_sqlvalue(flt.field, flt.max_value))
 
                 elif flt.type == 'expr':
                     vals = []
-                    left_name = '[' + field.sqlname + ']'
+                    left_name = '[' + flt.field.sqlname + ']'
                     levwh.append('(' + flt.tosql(vals, left_name=left_name) + ')')
                     for v in vals:
-                        pars.append(self.to_sqlvalue(field, v))
+                        pars.append(self.to_sqlvalue(flt.field, v))
 
             mode = ' ' + modes[l] + ' '
             where.append('(' + mode.join(levwh) + ')')
