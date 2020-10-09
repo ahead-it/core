@@ -190,19 +190,19 @@ class Page(Unit):
 
         dataset = []
         if self.rec is not None:
-            dataset = self._getschema(self.rec)
+            dataset = self._getschema(self._allfields)
 
         page['schema'] = dataset
 
         return page
 
-    def _getschema(self, rec):
+    def _getschema(self, fields):
         """
         Return record schema
         """
         schema = []
 
-        for f in self._allfields:
+        for f in fields:
             itm = {
                 'caption': f.caption,
                 'codename': f._codename,

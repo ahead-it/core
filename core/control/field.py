@@ -48,7 +48,7 @@ class Field(Control):
         if rel:
             tab = rel['to']()
 
-            schema = self._page._getschema(tab)
+            schema = self._page._getschema(tab._fields)
             if rel['filters']:
                 rel['filters'](tab)
 
