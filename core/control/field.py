@@ -67,8 +67,8 @@ class Field(Control):
 
             if tab.findset():
                 while tab.read():
-                    dataset.append(self._page._getdatarow(tab))
-                    fdataset.append(self._page._getdatarow(tab, True))
+                    dataset.append(self._page._getdatarow(tab._fields))
+                    fdataset.append(self._page._getdatarow(tab._fields, True))
 
         return {
             'schema': schema,
@@ -90,9 +90,9 @@ class Field(Control):
         if self._page.rec is not None:
             if self._page.rec._rowversion is None:
                 self._page.rec.insert(True)
-
-                self._page._dataset.append(self._page._getdatarow(self._page.rec))
-                self._page._fdataset.append(self._page._getdatarow(self._page.rec, True))
+                self._page._onaftergetdata()
+                self._page._dataset.append(self._page._getdatarow(self._page._allfields))
+                self._page._fdataset.append(self._page._getdatarow(self._page._allfields, True))
                 self._page._selectedrows = [len(self._page._dataset) - 1]
 
                 if not self._page._islist:
@@ -102,6 +102,6 @@ class Field(Control):
                 self._page.rec.modify(True)
 
         return {
-            'datarow': self._page._getdatarow(self._page.rec),
-            'fdatarow': self._page._getdatarow(self._page.rec, True)
+            'datarow': self._page._getdatarow(self._page._allfields),
+            'fdatarow': self._page._getdatarow(self._page._allfields, True)
         }

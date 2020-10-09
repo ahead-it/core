@@ -40,6 +40,10 @@ class Page(Unit):
         self._init_check()
         self._add_defaultactions()
 
+        self._allfields = self._fields
+        if self.rec:
+            self._allfields += self.rec._fields
+
         for m in self.__dict__:
             a = getattr(self, m)
             if issubclass(type(a), Control):
@@ -144,9 +148,13 @@ class Page(Unit):
         """
         Internal rendering
         """
+        qn = self.__class__.__qualname__
+        qn = qn.split('.')
+
         page = {
             'id': self._id,
             'name': self._name,
+            'classname': qn[0],
             'caption': self._caption,
             'controls': [],
             'readonly': self._readonly or (not self._modifyallowed)
@@ -168,7 +176,8 @@ class Page(Unit):
         Return record schema
         """
         schema = []
-        for f in rec._fields:
+
+        for f in self._allfields:
             itm = {
                 'caption': f.caption,
                 'codename': f._codename,
@@ -274,12 +283,12 @@ class Page(Unit):
         """
         self._delete()         
 
-    def _getdatarow(self, rec, format=False):
+    def _getdatarow(self, fields, format=False):
         """
         Returns current data row
         """
         line = []
-        for f in rec._fields:
+        for f in fields:
             if format:
                 if f._hasformat:
                     line.append(f.format(f.value))
@@ -342,14 +351,16 @@ class Page(Unit):
 
             if self._opennew and (self.rec._rowversion is None):
                 self.rec.init()
-                self._dataset.append(self._getdatarow(self.rec))
-                self._fdataset.append(self._getdatarow(self.rec, True))
+                self._onaftergetdata()
+                self._dataset.append(self._getdatarow(self._allfields))
+                self._fdataset.append(self._getdatarow(self._allfields, True))
 
             else:
                 if self.rec._findset(size=limit, offset=offset):
                     while (limit > 0) and self.rec.read():
-                        self._dataset.append(self._getdatarow(self.rec))
-                        self._fdataset.append(self._getdatarow(self.rec, True))
+                        self._onaftergetdata()
+                        self._dataset.append(self._getdatarow(self._allfields))
+                        self._fdataset.append(self._getdatarow(self._allfields, True))
 
                         limit -= 1
 
@@ -410,4 +421,9 @@ class Page(Unit):
     def _onload(self):
         """
         Event before show
-        """            
+        """
+
+    def _onaftergetdata(self):
+        """
+        Event after ger record
+        """
