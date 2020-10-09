@@ -60,7 +60,7 @@ class Page(Unit):
                 res.append(ctl.subpage)
         return res
 
-    def run(self):
+    def _run(self):
         """
         Render a page into the client
         """
@@ -72,6 +72,31 @@ class Page(Unit):
 
         obj = self._render()
         obj['action'] = 'page'
+        return obj
+
+    def run(self):
+        """
+        Render a page into the client
+        """
+        obj = self._run()
+        obj['display'] = 'window'
+        Client.send(obj)
+
+    def runtask(self):
+        """
+        Render a page into the client
+        """
+        obj = self._run()
+        obj['display'] = 'content'
+        Client.send(obj)
+
+    def runmodal(self):
+        """
+        Render a page into the client
+        """
+        obj = self._run()
+        obj['display'] = 'modal'
+        # FIXME manage return value of modal
         Client.send(obj)
 
     def setcaption(self, newcaption):

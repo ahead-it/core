@@ -27,6 +27,14 @@ A page is made by multiple controls. Each control can contains other controls an
 
 When a control is added as member of the page, it's possible to define its specific method.
 
+## Display 
+There are three display mode:
+
+* `run` the page is shown as popup or a window (default)
+* `runtask` the page is shown as main content of the client
+* `runmodal` the page is shown as popup or a window in modal way
+(code is suspended until the close)
+
 ## Triggers
 Following triggers are raised:
 
