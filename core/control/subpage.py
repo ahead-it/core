@@ -11,6 +11,10 @@ class SubPage(Control):
         super().__init__(parent)
         self.caption = caption
         self.subpage = pagecls()
+        self.subpage._parent = parent._page
+
+    def link(self, link):
+        self.subpage._applylink = link
 
     def _onrender(self, obj):
         obj['subpage'] = self.subpage._render()

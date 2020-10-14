@@ -33,6 +33,8 @@ class Page(Unit):
         self._islist = False
         self._opennew = False
         self._cardpage = None  # type: Callable[[], Page]
+        self._parent = None  # type: core.object.page.Page
+        self._applylink = None  # type: Callable[[core.object.table.Table], None]
             
         self.rec = None  # type: core.object.table.Table
 
@@ -368,6 +370,9 @@ class Page(Unit):
         self._fdataset = []
 
         if self.rec is not None:
+            if self._applylink:
+                self._applylink(self.rec)
+
             if offset == 0:
                 if self._islist:
                     self._count = self.rec.count()
@@ -390,6 +395,9 @@ class Page(Unit):
                         limit -= 1
 
         else:
+            self._onaftergetdata()
+            self._dataset.append(self._getdatarow(self._allfields))
+            self._fdataset.append(self._getdatarow(self._allfields, True))
             self._count = 1
 
         return {
@@ -448,7 +456,12 @@ class Page(Unit):
         Event before show
         """
 
+    def _onafterinitrec(self):
+        """
+        Event after init record
+        """
+
     def _onaftergetdata(self):
         """
-        Event after ger record
+        Event after get record
         """
