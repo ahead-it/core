@@ -19,4 +19,8 @@ class Repeater(Control):
         """
         Handles action double click
         """
-        return self._page._modbtn_click()
+        m = '_' + self._codename + '_dblclick'
+        if hasattr(self._page, m):
+            return self._page._pageinvoke(m)
+        else:
+            return self._page._modbtn_click()

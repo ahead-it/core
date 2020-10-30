@@ -53,6 +53,7 @@ Following triggers are raised:
 * `_selectrows(rows)` select rows in the dataset (empty array for new rows)
 * `_delete()` delete selected rows
 * `_close(mandatory)` closes gracefully or not the page
+* `_setrecord(rec)` change the record of the page with new one
 
 ## Controls
 Core defines several widgets that are rendered by the client in the proper way (web, mobile client, desktop client...).

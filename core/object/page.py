@@ -51,6 +51,16 @@ class Page(Unit):
             if issubclass(type(a), Control):
                 a._codename = m
 
+    def _setrecord(self, newrec):
+        """
+        Change record of the page with new one
+        """
+        self.rec = newrec
+
+        self._allfields = self._fields
+        if self.rec:
+            self._allfields += self.rec._fields
+
     def _getsubpages(self):
         """
         :rtype: list[Page]
@@ -290,6 +300,9 @@ class Page(Unit):
         if self._cardpage:
             card = self._cardpage()
             card._opennew = True
+            if self.rec:
+                card._setrecord(self.rec)
+                card.rec.init()
             card.run()
 
     def _modbtn_click(self):
@@ -381,6 +394,7 @@ class Page(Unit):
 
             if self._opennew and (self.rec._rowversion is None):
                 self.rec.init()
+                self._onafterinitrec()
                 self._onaftergetdata()
                 self._dataset.append(self._getdatarow(self._allfields))
                 self._fdataset.append(self._getdatarow(self._allfields, True))
@@ -412,7 +426,7 @@ class Page(Unit):
         """
         pk = []
         i = 0
-        for f in self.rec._allfields:
+        for f in self._allfields:
             if f in self.rec._primarykey:
                 pk.append(f.deserialize(self._dataset[index][i]))
             i += 1
