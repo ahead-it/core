@@ -41,6 +41,11 @@ Following triggers are raised:
 * `_onopen` before the page is shown
 * `_onqueryclose` before the page is closed (return False to cancel)
 * `_onclose` after the page is closed
+* `_onafterinitrec` after the new record is initialized
+* `_onaftergetdata` after the record is fetched from database
+
+## Magic properties
+* `_parent` if the page is shown as subpage contains the parent object
 
 ## Magic methods
 * `_ctlinvoke(controlid, method, args)` invoke specified method in the control identified by ID passing arguments

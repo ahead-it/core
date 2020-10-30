@@ -48,7 +48,7 @@ class Field(Control):
         if rel:
             tab = rel['to']()
 
-            schema = self._page._getschema(tab._fields)
+            schema = self._page._getschema(tab._dropdown)
             if rel['filters']:
                 rel['filters'](tab)
 
@@ -59,7 +59,7 @@ class Field(Control):
                 if not value.endswith('*'):
                     value += '*'
 
-                for f in tab._fields:
+                for f in tab._dropdown:
                     if f.type in [core.field.field.FieldType.TEXT, core.field.field.FieldType.CODE]:
                         f.setfilter(value)
 
@@ -67,8 +67,8 @@ class Field(Control):
 
             if tab.findset():
                 while tab.read():
-                    dataset.append(self._page._getdatarow(tab._fields))
-                    fdataset.append(self._page._getdatarow(tab._fields, True))
+                    dataset.append(self._page._getdatarow(tab._dropdown))
+                    fdataset.append(self._page._getdatarow(tab._dropdown, True))
 
         return {
             'schema': schema,

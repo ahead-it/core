@@ -15,12 +15,13 @@ class Table(Unit):
     def __init__(self):
         super().__init__()
         self._type = UnitType.TABLE
-        self._primarykey = [] # type: List[Field]
-        self._indexes = {} # type: Dict[str, List[Field]]        
+        self._primarykey = []  # type: List[Field]
+        self._dropdown = []  # type: List[Field]
+        self._indexes = {}  # type: Dict[str, List[Field]]
         self._init()
         self._init_check()
         
-        self._currentkey = [] # type: List[Field]
+        self._currentkey = []  # type: List[Field]
         self._ascending = True
         self._locktable = False
 
@@ -32,6 +33,12 @@ class Table(Unit):
         self._filterlevelmode = {}
 
         self.setcurrentkey()
+
+        if not self._dropdown:
+            for field in self._fields:
+                self._dropdown.append(field)
+                if len(self._dropdown) >= 2:
+                    break
 
     def __setattr__(self, key, value):
         handled = False
@@ -72,6 +79,14 @@ class Table(Unit):
         self._primarykey.clear()
         for field in fields:
             self._primarykey.append(field)
+
+    def _setdropdown(self, *fields):
+        """
+        Set the dropdown fields for the table during lookup
+        """
+        self._dropdown.clear()
+        for field in fields:
+            self._dropdown.append(field)
 
     def _addindex(self, name, *fields):
         """

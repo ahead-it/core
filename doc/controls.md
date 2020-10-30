@@ -141,3 +141,13 @@ Available properties:
 Allow to insert a page inside another page (for example document UI
 with header and rows in the same view).
 
+To link parent page to subpage (for example applying a link
+between two record) you can use `link` property:
+
+```python
+    ...
+    self.sub1 = control.SubPage(self.ctl1, page.MySubPage)
+    self.sub1.link(lambda rec2: rec2.code.setrange(self.rec.code.value))
+    ...
+```
+
