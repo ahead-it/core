@@ -412,11 +412,11 @@ class Page(Unit):
         """
         pk = []
         i = 0
-        for f in self.rec._fields:
+        for f in self.rec._allfields:
             if f in self.rec._primarykey:
-                pk.append(self._dataset[index][i])
+                pk.append(f.deserialize(self._dataset[index][i]))
             i += 1
-        
+
         return pk
         
     def _selectrows(self, rows):

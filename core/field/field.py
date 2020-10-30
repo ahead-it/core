@@ -153,12 +153,6 @@ class Field:
     def __rsub__(self, other):
         return self.value - self.checkvalue(other)
 
-    def __eq__(self, other):
-        return self.value == other 
-
-    def __ne__(self, other):
-        return self.value != other             
-
     def __lt__(self, other):
         return self.value < other             
 

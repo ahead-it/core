@@ -457,7 +457,7 @@ class SqlServer(core.database.server.Server):
     def _table_findset(self, *, table: core.object.table.Table, size=None, offset=None, nextset=False, ascending=None, pk=None):
         pars = []
         if ascending is None:
-            ascending = table.ascending
+            ascending = table._ascending
 
         sql = 'SELECT '
 
