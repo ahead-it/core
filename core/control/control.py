@@ -38,7 +38,7 @@ class Control:
         Render itself
         """
         if not self.visible:
-            return None
+            return {}
 
         ctl = {
             'id': self.id,
