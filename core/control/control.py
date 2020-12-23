@@ -12,6 +12,7 @@ class Control:
         self._page = None  # type: core.object.page.Page
         self._codename = ''        
         self.id = str(uuid.uuid4())
+        self.visible = True
         self._controls = []  # type: List[Control]
 
         if issubclass(type(parent), core.object.page.Page):
@@ -36,6 +37,9 @@ class Control:
         """
         Render itself
         """
+        if not self.visible:
+            return None
+
         ctl = {
             'id': self.id,
             'type': self.__class__.__name__,

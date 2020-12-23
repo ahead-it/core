@@ -60,4 +60,8 @@ Core defines several widgets that are rendered by the client in the proper way (
 
 Each control exposes one or more methods that can be subscribed in the page as `_codename_method(params)`.
 
+### Generic control properties
+* `visible` if False the control is not rendered to the client
+
+
 * [Control List](controls.md)
