@@ -84,7 +84,8 @@ class Field(Control):
             value = self.field.evaluate(value)
         else:
             value = self.field.deserialize(value)
-        
+
+        self._page._pageinvoke('_' + self._codename + '_validate')
         self.field.validate(value)
 
         if self._page.rec is not None:

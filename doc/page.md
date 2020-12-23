@@ -54,6 +54,7 @@ Following triggers are raised:
 * `_delete()` delete selected rows
 * `_close(mandatory)` closes gracefully or not the page
 * `_setrecord(rec)` change the record of the page with new one
+* `_render()` get UI structure
 
 ## Controls
 Core defines several widgets that are rendered by the client in the proper way (web, mobile client, desktop client...).

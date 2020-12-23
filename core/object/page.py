@@ -41,10 +41,7 @@ class Page(Unit):
         self._init()
         self._init_check()
         self._add_defaultactions()
-
-        self._allfields = self._fields
-        if self.rec:
-            self._allfields += self.rec._fields
+        self._setrecord(self.rec)
 
         for m in self.__dict__:
             a = getattr(self, m)
@@ -60,6 +57,13 @@ class Page(Unit):
         self._allfields = self._fields
         if self.rec:
             self._allfields += self.rec._fields
+
+        for id in self._allcontrols:
+            ctl = self._allcontrols[id]
+            if (ctl.__class__.__name__ == 'Field') and ctl.field:
+                for f in self._allfields:
+                    if ctl.field._codename == f._codename:
+                        ctl.field = f
 
     def _getsubpages(self):
         """
@@ -120,6 +124,16 @@ class Page(Unit):
             'pageid': self._id,
             'property': 'caption',
             'value': newcaption
+        }
+        Client.send(msg)
+
+    def render(self):
+        """
+        Force client to redraw the page
+        """
+        msg = {
+            'action': 'renderpage',
+            'pageid': self._id,
         }
         Client.send(msg)
 
